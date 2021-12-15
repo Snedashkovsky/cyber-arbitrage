@@ -9,4 +9,4 @@
 
 ### Search the Best Arbitrage
 
-[Search the Best Arbitrage in Bostrom Network](search_arbitrage.ipynb)
+[Search the Best Arbitrage in Bostrom Pools](search_arbitrage.ipynb)
