@@ -64,13 +64,24 @@ def get_pools_osmosis(display_data: bool = False, osmo_pools_api_url: str = OSMO
 
 
 def get_pools(display_data: bool = False,
+              network=None,
               bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
-    _pools_bostrom_df = get_pools_bostrom()
-    _pools_osmosis_df = get_pools_osmosis()
-    _pools_df = _pools_bostrom_df[['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']].append(
-        _pools_osmosis_df[(_pools_osmosis_df.denoms_count == 2) &
-                          (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))]
-        [['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']])
+    if network is None:
+        _pools_bostrom_df = get_pools_bostrom()[
+            ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
+        _pools_osmosis_df = get_pools_osmosis()[
+            ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms', 'denoms_count']]
+        _pools_df = _pools_bostrom_df.append(
+            _pools_osmosis_df[(_pools_osmosis_df.denoms_count == 2) &
+                              (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))])[
+                ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+    elif network == 'bostrom':
+        _pools_df = get_pools_bostrom()[['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+    elif network == 'osmosis':
+        _pools_df = get_pools_osmosis()[['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+    else:
+        print(f'`network` parameter must be equaled `` or `osmosis`')
+        return pd.DataFrame(columns=['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee'])
     if display_data:
         display(HTML(_pools_df.to_html(index=False, notebook=True, show_dimensions=False)))
     return _pools_df
