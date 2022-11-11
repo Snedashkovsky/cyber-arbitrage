@@ -42,14 +42,14 @@ def get_pools_osmosis(display_data: bool = False, osmo_pools_api_url: str = OSMO
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
     _pools_osmosis_df['type_id'] = _pools_osmosis_df['@type'].map(
         lambda x: 1 if x == '/osmosis.gamm.v1beta1.Pool' else 0)
-    _pools_osmosis_df['totalWeight'] = _pools_osmosis_df['totalWeight'].astype(int)
-    _pools_osmosis_df['balances'] = _pools_osmosis_df['poolAssets'].map(lambda x: [item['token'] for item in x])
+    _pools_osmosis_df['total_weight'] = _pools_osmosis_df['total_weight'].astype(int)
+    _pools_osmosis_df['balances'] = _pools_osmosis_df['pool_assets'].map(lambda x: [item['token'] for item in x])
     _pools_osmosis_df['balances'] = \
         _pools_osmosis_df['balances'].map(
             lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']} for item in x])
-    _pools_osmosis_df['denoms_count'] = _pools_osmosis_df['poolAssets'].map(lambda x: len(x))
-    _pools_osmosis_df['swap_fee'] = _pools_osmosis_df['poolParams'].map(lambda x: float(x['swapFee']))
-    _pools_osmosis_df['reserve_coin_denoms'] = _pools_osmosis_df['poolAssets'].map(
+    _pools_osmosis_df['denoms_count'] = _pools_osmosis_df['pool_assets'].map(lambda x: len(x))
+    _pools_osmosis_df['swap_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['swap_fee']))
+    _pools_osmosis_df['reserve_coin_denoms'] = _pools_osmosis_df['pool_assets'].map(
         lambda x: [item['token']['denom'] for item in x])
     _pools_osmosis_df['reserve_coin_denoms'] = \
         _pools_osmosis_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
@@ -58,8 +58,8 @@ def get_pools_osmosis(display_data: bool = False, osmo_pools_api_url: str = OSMO
         print('Osmosis Pools')
         display(HTML(
             _pools_osmosis_df[_pools_osmosis_df.id.isin(bostrom_related_osmo_pools)]
-                .sort_values('totalWeight', ascending=False).to_html(index=False, notebook=True,
-                                                                     show_dimensions=False)))
+            .sort_values('total_weight', ascending=False).to_html(
+                index=False, notebook=True, show_dimensions=False)))
     return _pools_osmosis_df
 
 
@@ -71,10 +71,11 @@ def get_pools(display_data: bool = False,
             ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
         _pools_osmosis_df = get_pools_osmosis()[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms', 'denoms_count']]
-        _pools_df = _pools_bostrom_df.append(
-            _pools_osmosis_df[(_pools_osmosis_df.denoms_count == 2) &
-                              (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))])[
-                ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+        _pools_df = pd.concat(
+            [_pools_bostrom_df,
+             _pools_osmosis_df[(_pools_osmosis_df.denoms_count == 2) &
+                               (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))]])[
+            ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'bostrom':
         _pools_df = get_pools_bostrom()[['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'osmosis':
@@ -89,17 +90,18 @@ def get_pools(display_data: bool = False,
 
 def get_prices(pools_df: pd.DataFrame, display_data: bool = False) -> pd.DataFrame:
     _coins_list = list(pools_df['reserve_coin_denoms'])
-    _coins_unique_set = set(np.concatenate(_coins_list).flat)
-    _price_df = pd.DataFrame(columns=_coins_unique_set, index=_coins_unique_set)
+    _coins_unique_list = list(set(np.concatenate(_coins_list).flat))
+    _price_df = pd.DataFrame(columns=_coins_unique_list, index=_coins_unique_list)
 
     for _index, _pool_row in pools_df.iterrows():
         _coins_pair = _pool_row.reserve_coin_denoms
         _balances = {item['denom']: int(item['amount']) for item in _pool_row.balances}
-        _price_df.loc[_coins_pair[0], _coins_pair[1]] = _balances[_coins_pair[0]] / _balances[_coins_pair[1]] * (
-                1 - POOL_FEE)
-        _price_df.loc[_coins_pair[1], _coins_pair[0]] = _balances[_coins_pair[1]] / _balances[_coins_pair[0]] * (
-                1 - POOL_FEE)
-    for _coin in _coins_unique_set:
+        if _balances:
+            _price_df.loc[_coins_pair[0], _coins_pair[1]] = _balances[_coins_pair[0]] / _balances[_coins_pair[1]] * (
+                    1 - POOL_FEE)
+            _price_df.loc[_coins_pair[1], _coins_pair[0]] = _balances[_coins_pair[1]] / _balances[_coins_pair[0]] * (
+                    1 - POOL_FEE)
+    for _coin in _coins_unique_list:
         _price_df.loc[_coin, _coin] = 1
     _price_df.loc['uatom in bostrom', 'uatom in osmosis'] = 1
     _price_df.loc['uatom in osmosis', 'uatom in bostrom'] = 1
