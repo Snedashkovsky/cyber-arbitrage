@@ -2,3 +2,5 @@ subprocess
 json
 pandas
 numpy
+requests
+python-dotenv
