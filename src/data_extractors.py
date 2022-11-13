@@ -3,10 +3,11 @@ import pandas as pd
 import numpy as np
 from math import isnan
 from IPython.core.display import display, HTML
+from pandarallel import pandarallel
 
 from src.bash_utils import get_json_from_bash_query
 from config import IBC_COIN_NAMES, BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMO_POOLS_API_URL, \
-    BOSTROM_NODE_URL, POOL_FEE
+    BOSTROM_NODE_RPC_URL, POOL_FEE
 
 
 def rename_denom(denom: str, ibc_coin_names: dict = IBC_COIN_NAMES) -> str:
@@ -14,14 +15,21 @@ def rename_denom(denom: str, ibc_coin_names: dict = IBC_COIN_NAMES) -> str:
 
 
 def get_pools_bostrom(display_data: bool = False,
-                      bostrom_pools_bash_query: str = BOSTROM_POOLS_BASH_QUERY,
-                      bostrom_node_url: str = BOSTROM_NODE_URL) -> pd.DataFrame:
-    _pools_bostrom_json = get_json_from_bash_query(bostrom_pools_bash_query)
-    _pools_bostrom_df = pd.DataFrame(_pools_bostrom_json['pools'])
+                      recalculate_pools: bool = False,
+                      bostrom_pools_bash_query: str = BOSTROM_POOLS_BASH_QUERY) -> pd.DataFrame:
+    if recalculate_pools:
+        _pools_bostrom_json = get_json_from_bash_query(bostrom_pools_bash_query)
+        _pools_bostrom_df = pd.DataFrame(_pools_bostrom_json['pools'])
+        _pools_bostrom_df.to_csv('data/pools.csv')
+    else:
+        _pools_bostrom_df = pd.read_csv('data/pools.csv',
+                                        converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
+
+    pandarallel.initialize(nb_workers=len(_pools_bostrom_df), verbose=1)
     _pools_bostrom_df['balances'] = \
-        _pools_bostrom_df['reserve_account_address'].map(
+        _pools_bostrom_df['reserve_account_address'].parallel_map(
             lambda address: get_json_from_bash_query(
-                f'cyber query bank balances {address} --node {bostrom_node_url} -o json')['balances'])
+                f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json')['balances'])
     _pools_bostrom_df['balances'] = \
         _pools_bostrom_df['balances'].map(lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']}
                                                      for item in x])

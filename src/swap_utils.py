@@ -1,6 +1,8 @@
 import pandas as pd
+from cyber_sdk.core.bech32 import AccAddress
+from cyber_sdk.core.coins import Coins
 
-from config import BOSTROM_NODE_URL, POOL_FEE
+from config import CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, CYBER_LCD_CLIENT
 
 
 def get_pool_balance_by_coin(pool_balances: list, coin: str) -> int:
@@ -10,6 +12,14 @@ def get_pool_balance_by_coin(pool_balances: list, coin: str) -> int:
         print(pool_balances, coin, e)
 
 
+def get_balance(address: str, price_df: pd.DataFrame, base_denom: str = 'hydrogen') -> [int, Coins]:
+    balance = 0
+    balance_all_coins = CYBER_LCD_CLIENT.bank.balance(address=AccAddress(address))[0]
+    for coin in balance_all_coins.to_list():
+        balance += coin.amount * price_df.loc[base_denom, coin.denom]
+    return int(balance), balance_all_coins
+
+
 def generate_swap_query(coin_from_amount: float,
                         coin_from: str,
                         coin_to: str,
@@ -17,14 +27,14 @@ def generate_swap_query(coin_from_amount: float,
                         price_df: pd.DataFrame,
                         max_slippage: float = 0.03,
                         wallet: str = '$WALLET',
-                        chain_id: str = 'bostrom',
-                        node=BOSTROM_NODE_URL) -> str:
+                        chain_id: str = CHAIN_ID,
+                        node_rpc_url=BOSTROM_NODE_RPC_URL) -> str:
     _pool_id = coins_pool_df.loc[:, 'id'].to_list()[0]
     _pool_type = coins_pool_df.loc[:, 'type_id'].to_list()[0]
     _price = price_df.loc[coin_from, coin_to] * (1 + max_slippage)
     return f'cyber tx liquidity swap {_pool_id} {_pool_type} {int(coin_from_amount)}{coin_from} {coin_to} ' \
            f'{_price:.6f} 0.003 --from {wallet} 'f'--chain-id {chain_id} --gas 200000 --gas-prices 0.01boot --yes ' \
-           f'--node {node} --broadcast-mode block'
+           f'--node {node_rpc_url} --broadcast-mode block'
 
 
 def generate_swap_queries(way: list,

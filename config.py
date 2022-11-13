@@ -1,3 +1,6 @@
+from cyber_sdk.client.lcd import LCDClient, AsyncLCDClient
+
+
 IBC_COIN_NAMES = \
     {
         'ibc/15E9C5CF5969080539DB395FA7D9C0868265217EFC528433671AAF9B1912D159': 'uatom in bostrom',
@@ -9,9 +12,15 @@ IBC_COIN_NAMES = \
      }
 
 BOSTROM_RELATED_OSMO_POOLS = (1, 596, 597)
-BOSTROM_NODE_URL = 'https://rpc.bostrom.cybernode.ai:443'
-BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_URL} -o json'
+BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.bronbro.io:443'
+BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.bronbro.io/'
+BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
 
 OSMO_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
 
 POOL_FEE = 0.003
+
+CHAIN_ID = 'bostrom'
+
+CYBER_LCD_CLIENT = LCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
+CYBER_ASYNC_LCD_CLIENT = AsyncLCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
