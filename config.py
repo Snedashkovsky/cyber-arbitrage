@@ -16,11 +16,12 @@ BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.bronbro.io:443'
 BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.bronbro.io/'
 BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
 
-OSMO_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
+OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
+OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
+OSMOSIS_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
 
 POOL_FEE = 0.003
 
 CHAIN_ID = 'bostrom'
-
 CYBER_LCD_CLIENT = LCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
 CYBER_ASYNC_LCD_CLIENT = AsyncLCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)

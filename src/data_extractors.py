@@ -6,7 +6,7 @@ from IPython.core.display import display, HTML
 from pandarallel import pandarallel
 
 from src.bash_utils import get_json_from_bash_query
-from config import IBC_COIN_NAMES, BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMO_POOLS_API_URL, \
+from config import IBC_COIN_NAMES, BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, \
     BOSTROM_NODE_RPC_URL, POOL_FEE
 
 
@@ -15,14 +15,14 @@ def rename_denom(denom: str, ibc_coin_names: dict = IBC_COIN_NAMES) -> str:
 
 
 def get_pools_bostrom(display_data: bool = False,
-                      recalculate_pools: bool = False,
+                      recalculate_pools: bool = True,
                       bostrom_pools_bash_query: str = BOSTROM_POOLS_BASH_QUERY) -> pd.DataFrame:
     if recalculate_pools:
         _pools_bostrom_json = get_json_from_bash_query(bostrom_pools_bash_query)
         _pools_bostrom_df = pd.DataFrame(_pools_bostrom_json['pools'])
-        _pools_bostrom_df.to_csv('data/pools.csv')
+        _pools_bostrom_df.to_csv('data/bostrom_pools.csv')
     else:
-        _pools_bostrom_df = pd.read_csv('data/pools.csv',
+        _pools_bostrom_df = pd.read_csv('data/bostrom_pools.csv',
                                         converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
 
     pandarallel.initialize(nb_workers=len(_pools_bostrom_df), verbose=1)
@@ -43,20 +43,24 @@ def get_pools_bostrom(display_data: bool = False,
     return _pools_bostrom_df
 
 
-def get_pools_osmosis(display_data: bool = False, osmo_pools_api_url: str = OSMO_POOLS_API_URL,
+def get_pools_osmosis(display_data: bool = False,
+                      recalculate_pools: bool = True,
+                      osmosis_pools_api_url: str = OSMOSIS_POOLS_API_URL,
                       bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
-    _pools_osmosis_json = requests.get(osmo_pools_api_url).json()
+    _pools_osmosis_json = requests.get(osmosis_pools_api_url).json()
     _pools_osmosis_df = pd.DataFrame(_pools_osmosis_json['pools'])
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
     _pools_osmosis_df['type_id'] = _pools_osmosis_df['@type'].map(
         lambda x: 1 if x == '/osmosis.gamm.v1beta1.Pool' else 0)
     _pools_osmosis_df['total_weight'] = _pools_osmosis_df['total_weight'].astype(int)
-    _pools_osmosis_df['balances'] = _pools_osmosis_df['pool_assets'].map(lambda x: [item['token'] for item in x])
-    _pools_osmosis_df['balances'] = \
-        _pools_osmosis_df['balances'].map(
-            lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']} for item in x])
+    _pools_osmosis_df['balances'] = _pools_osmosis_df['pool_assets'].map(
+        lambda x: [
+            {'denom': rename_denom(item['token']['denom']),
+             'amount': item['token']['amount'],
+             'weight': item['weight']} for item in x])
     _pools_osmosis_df['denoms_count'] = _pools_osmosis_df['pool_assets'].map(lambda x: len(x))
     _pools_osmosis_df['swap_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['swap_fee']))
+    _pools_osmosis_df['exit_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['exit_fee']))
     _pools_osmosis_df['reserve_coin_denoms'] = _pools_osmosis_df['pool_assets'].map(
         lambda x: [item['token']['denom'] for item in x])
     _pools_osmosis_df['reserve_coin_denoms'] = \
@@ -65,19 +69,20 @@ def get_pools_osmosis(display_data: bool = False, osmo_pools_api_url: str = OSMO
     if display_data:
         print('Osmosis Pools')
         display(HTML(
-            _pools_osmosis_df[_pools_osmosis_df.id.isin(bostrom_related_osmo_pools)]
+            _pools_osmosis_df
             .sort_values('total_weight', ascending=False).to_html(
                 index=False, notebook=True, show_dimensions=False)))
     return _pools_osmosis_df
 
 
 def get_pools(display_data: bool = False,
+              recalculate_pools: bool = True,
               network=None,
               bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
     if network is None:
-        _pools_bostrom_df = get_pools_bostrom()[
+        _pools_bostrom_df = get_pools_bostrom(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
-        _pools_osmosis_df = get_pools_osmosis()[
+        _pools_osmosis_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms', 'denoms_count']]
         _pools_df = pd.concat(
             [_pools_bostrom_df,
@@ -85,14 +90,14 @@ def get_pools(display_data: bool = False,
                                (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))]])[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'bostrom':
-        _pools_df = get_pools_bostrom()[['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+        _pools_df = get_pools_bostrom(display_data=display_data, recalculate_pools=recalculate_pools)[
+            ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'osmosis':
-        _pools_df = get_pools_osmosis()[['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+        _pools_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
+            ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     else:
-        print(f'`network` parameter must be equaled `` or `osmosis`')
+        print(f'`network` parameter must be equaled `bostrom` or `osmosis`')
         return pd.DataFrame(columns=['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee'])
-    if display_data:
-        display(HTML(_pools_df.to_html(index=False, notebook=True, show_dimensions=False)))
     return _pools_df
 
 
