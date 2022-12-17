@@ -1,18 +1,22 @@
 import pandas as pd
 import numpy as np
+from typing import Optional
+
 from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coins
 
 from config import CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, CYBER_LCD_CLIENT
 
 
-def get_pool_value_by_coin(pool_balances: list[dict], coin: str, return_weight: bool = False) -> int:
+def get_pool_value_by_coin(pool_balances: list[dict], coin: str,
+                           return_weight: bool = False, print_error: bool = False) -> Optional[int]:
 
     _value_key = 'weight' if return_weight else 'amount'
     try:
         return [int(item[_value_key]) for item in pool_balances if item['denom'] == coin][0]
     except (KeyError, IndexError) as e:
-        print(f'Key {_value_key} for coin {coin} not fount in {pool_balances}\n{e}')
+        if print_error:
+            print(f'Key {_value_key} for coin {coin} not fount in {pool_balances}\n{e}')
 
 
 def get_balance(address: str, price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen') -> [int, Coins]:

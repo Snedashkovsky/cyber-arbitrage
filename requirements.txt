@@ -4,3 +4,8 @@ pandas
 numpy
 requests
 python-dotenv
+tqdm
+cyber_sdk
+ipython
+pandarallel
+multiprocess
