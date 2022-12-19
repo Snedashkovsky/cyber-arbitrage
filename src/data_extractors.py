@@ -7,12 +7,18 @@ from pandarallel import pandarallel
 from itertools import permutations
 
 from src.bash_utils import get_json_from_bash_query
+from src.swap_utils import get_pool_value_by_coin
 from config import IBC_COIN_NAMES, BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, \
-    BOSTROM_NODE_RPC_URL, POOL_FEE
+    BOSTROM_NODE_RPC_URL
 
 
-def rename_denom(denom: str, ibc_coin_names: dict = IBC_COIN_NAMES) -> str:
-    return ibc_coin_names[denom] if denom in ibc_coin_names.keys() else denom
+def rename_denom(denom: str, ibc_coin_names_dict: dict = IBC_COIN_NAMES) -> str:
+    return ibc_coin_names_dict[denom] if denom in ibc_coin_names_dict.keys() else denom
+
+
+def reverse_rename_denom(denom: str, ibc_coin_names_dict: dict = IBC_COIN_NAMES) -> str:
+    ibc_coin_names_reverse_dict = {v: k for k, v in ibc_coin_names_dict.items()}
+    return ibc_coin_names_reverse_dict[denom] if denom in ibc_coin_names_reverse_dict.keys() else denom
 
 
 def get_pools_bostrom(display_data: bool = False,
@@ -47,13 +53,16 @@ def get_pools_bostrom(display_data: bool = False,
 def get_pools_osmosis(display_data: bool = False,
                       recalculate_pools: bool = True,
                       osmosis_pools_api_url: str = OSMOSIS_POOLS_API_URL,
-                      bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
+                      bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS,
+                      min_uosmo_balance: int = 10_000_000) -> pd.DataFrame:
     _pools_osmosis_json = requests.get(osmosis_pools_api_url).json()
     _pools_osmosis_df = pd.DataFrame(_pools_osmosis_json['pools'])
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
+    _pools_osmosis_df = \
+        _pools_osmosis_df[_pools_osmosis_df['@type'] != '/osmosis.gamm.poolmodels.stableswap.v1beta1.Pool']
     _pools_osmosis_df['type_id'] = _pools_osmosis_df['@type'].map(
         lambda x: 1 if x == '/osmosis.gamm.v1beta1.Pool' else 0)
-    _pools_osmosis_df['total_weight'] = _pools_osmosis_df['total_weight'].astype(int)
+    _pools_osmosis_df['total_weight'] = _pools_osmosis_df['total_weight'].fillna(0).astype(int)
     _pools_osmosis_df['balances'] = _pools_osmosis_df['pool_assets'].map(
         lambda x: [
             {'denom': rename_denom(item['token']['denom']),
@@ -67,6 +76,17 @@ def get_pools_osmosis(display_data: bool = False,
     _pools_osmosis_df['reserve_coin_denoms'] = \
         _pools_osmosis_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
     _pools_osmosis_df['network'] = 'osmosis'
+    if min_uosmo_balance:
+        _pools_osmosis_df.loc[:, 'uosmo_balance'] = \
+            _pools_osmosis_df.balances.map(lambda x: get_pool_value_by_coin(x, 'uosmo'))
+        _pools_osmosis_df.loc[:, 'uatom_balance'] = \
+            _pools_osmosis_df.balances.map(
+                lambda x: get_pool_value_by_coin(x, reverse_rename_denom('uatom in osmosis')))
+        _pools_osmosis_df = \
+            _pools_osmosis_df[
+                ((_pools_osmosis_df.uosmo_balance.isna()) & (_pools_osmosis_df.uosmo_balance.isna())) |
+                ((_pools_osmosis_df.uosmo_balance > min_uosmo_balance) | (
+                            _pools_osmosis_df.uatom_balance > min_uosmo_balance // 10))]
     if display_data:
         print('Osmosis Pools')
         display(HTML(
