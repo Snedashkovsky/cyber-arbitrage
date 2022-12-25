@@ -5,7 +5,7 @@ from typing import Optional
 from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coins
 
-from config import CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, CYBER_LCD_CLIENT
+from config import CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, CYBER_LCD_CLIENT, WALLET
 
 
 def get_pool_value_by_coin(pool_balances: list[dict], coin: str,
@@ -40,7 +40,7 @@ def generate_swap_bash_query(
         coins_pool_df: pd.DataFrame,
         price_df: pd.DataFrame,
         max_slippage: float = 0.03,
-        wallet: str = '$WALLET',
+        wallet: str = WALLET,
         chain_id: str = CHAIN_ID,
         node_rpc_url: str = BOSTROM_NODE_RPC_URL) -> str:
 
@@ -52,10 +52,11 @@ def generate_swap_bash_query(
            f'--node {node_rpc_url} --broadcast-mode block'
 
 
-def generate_swap_bash_queries(way: list,
-                          coin1_amount: float,
-                          pools_df: pd.DataFrame,
-                          price_df: pd.DataFrame) -> [float, list]:
+def generate_swap_bash_queries(
+        way: list,
+        coin1_amount: float,
+        pools_df: pd.DataFrame,
+        price_df: pd.DataFrame) -> [float, list]:
 
     _coin_from_amount = coin1_amount
     coin2_way_queries = []
