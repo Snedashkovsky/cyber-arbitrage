@@ -52,7 +52,7 @@ def generate_swap_bash_query(
         coin_to: str,
         coins_pool_df: pd.DataFrame,
         price_df: pd.DataFrame,
-        max_slippage: float = 0.03,
+        max_slippage: float = 0.15,
         wallet: str = WALLET,
         chain_id: str = CHAIN_ID,
         node_rpc_url: str = BOSTROM_NODE_RPC_URL) -> str:

@@ -9,7 +9,7 @@
 
 ### Pools Liquidity
 
-[Pools Liquidity in GBOOT](pools_liquidity_in_gboot.ipynb)
+[Pools Liquidity in GH](pools_liquidity_in_gh.ipynb)
 
 ### Search the Best Arbitrage
 
