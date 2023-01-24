@@ -1,6 +1,6 @@
 from cyber_sdk.client.lcd import LCDClient, AsyncLCDClient
 
-
+# human-readable names of ibc denoms
 IBC_COIN_NAMES = \
     {
         'ibc/15E9C5CF5969080539DB395FA7D9C0868265217EFC528433671AAF9B1912D159': 'uatom in bostrom',
@@ -26,10 +26,11 @@ OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
 OSMOSIS_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
 
+# usual pool fee
 POOL_FEE = 0.003
 
-CHAIN_ID = 'bostrom'
-CYBER_LCD_CLIENT = LCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
-CYBER_ASYNC_LCD_CLIENT = AsyncLCDClient(chain_id=CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
+BOSTROM_CHAIN_ID = 'bostrom'
+BOSTROM_LCD_CLIENT = LCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
+BOSTROM_ASYNC_LCD_CLIENT = AsyncLCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
 
-WALLET = '$WALLET'
+CLI_WALLET = '$WALLET'
