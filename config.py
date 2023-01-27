@@ -27,7 +27,8 @@ BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RP
 
 OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
-OSMOSIS_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
+-OSMOSIS_POOLS_API_URL = 'https://lcd.osmosis-1.bronbro.io/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
+# 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
 
 # usual pool fee
 POOL_FEE = 0.003
