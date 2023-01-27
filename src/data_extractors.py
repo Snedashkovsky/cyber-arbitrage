@@ -8,22 +8,20 @@ from itertools import permutations
 
 from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
-from config import IBC_COIN_NAMES, BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, \
-    BOSTROM_NODE_RPC_URL
-
-
-def rename_denom(denom: str, ibc_coin_names_dict: dict = IBC_COIN_NAMES) -> str:
-    return ibc_coin_names_dict[denom] if denom in ibc_coin_names_dict.keys() else denom
-
-
-def reverse_rename_denom(denom: str, ibc_coin_names_dict: dict = IBC_COIN_NAMES) -> str:
-    ibc_coin_names_reverse_dict = {v: k for k, v in ibc_coin_names_dict.items()}
-    return ibc_coin_names_reverse_dict[denom] if denom in ibc_coin_names_reverse_dict.keys() else denom
+from src.denom_utils import rename_denom, reverse_rename_denom
+from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL
 
 
 def get_pools_bostrom(display_data: bool = False,
                       recalculate_pools: bool = True,
                       bostrom_pools_bash_query: str = BOSTROM_POOLS_BASH_QUERY) -> pd.DataFrame:
+    """
+    Extract pools data from bostrom network
+    :param display_data: display or not pool data
+    :param recalculate_pools: update or not pool list
+    :param bostrom_pools_bash_query: bash query for getting pool data
+    :return: dataframe with pools data
+    """
     if recalculate_pools:
         _pools_bostrom_json = get_json_from_bash_query(bostrom_pools_bash_query)
         _pools_bostrom_df = pd.DataFrame(_pools_bostrom_json['pools'])
@@ -55,6 +53,15 @@ def get_pools_osmosis(display_data: bool = False,
                       osmosis_pools_api_url: str = OSMOSIS_POOLS_API_URL,
                       bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS,
                       min_uosmo_balance: int = 10_000_000) -> pd.DataFrame:
+    """
+    Extract pools data from osmosis network
+    :param display_data: display or not pool data
+    :param recalculate_pools: update or not pool list
+    :param osmosis_pools_api_url: API for getting pool data
+    :param bostrom_related_osmo_pools: list of bostrom related pool ids
+    :param min_uosmo_balance: min balance in pool for excluding empty pools from calculations
+    :return: dataframe with pools data
+    """
     _pools_osmosis_json = requests.get(osmosis_pools_api_url).json()
     _pools_osmosis_df = pd.DataFrame(_pools_osmosis_json['pools'])
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
@@ -100,6 +107,14 @@ def get_pools(display_data: bool = False,
               recalculate_pools: bool = True,
               network=None,
               bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
+    """
+    Extract pools data from osmosis or/and bostrom network
+    :param display_data: display or not pool data
+    :param recalculate_pools: update or not pool list
+    :param network: `bostrom` or `osmosis` network, both of them are extracted by default
+    :param bostrom_related_osmo_pools: list of bostrom related pool ids in osmosis network
+    :return: dataframe with pools data
+    """
     if network is None:
         _pools_bostrom_df = get_pools_bostrom(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
@@ -123,6 +138,12 @@ def get_pools(display_data: bool = False,
 
 
 def get_prices(pools_df: pd.DataFrame, display_data: bool = False) -> pd.DataFrame:
+    """
+    Calculate direct prices from pools data
+    :param pools_df: dataframe with pools data
+    :param display_data: display or not price data
+    :return: dataframe with price data
+    """
     _coins_list = list(pools_df['reserve_coin_denoms'])
     _coins_unique_list = list(set(np.concatenate(_coins_list).flat))
     _price_df = pd.DataFrame(columns=_coins_unique_list, index=_coins_unique_list)
@@ -160,6 +181,12 @@ def get_prices(pools_df: pd.DataFrame, display_data: bool = False) -> pd.DataFra
 
 
 def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd.DataFrame:
+    """
+    Calculate enriched prices from direct price data
+    :param price_df: dataframe with price data
+    :param display_data: display or not enriched price data
+    :return: dataframe with enriched price data
+    """
     _price_enriched_df = price_df.copy()
     for _col in [['boot', 'boot in osmosis'], ['uosmo', 'uosmo in bostrom'], ['uatom in osmosis', 'uatom in bostrom']]:
         for _index in _price_enriched_df.index:
