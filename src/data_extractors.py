@@ -9,43 +9,53 @@ from itertools import permutations
 from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
-from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL
+from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL
 
 
-def get_pools_bostrom(display_data: bool = False,
-                      recalculate_pools: bool = True,
-                      bostrom_pools_bash_query: str = BOSTROM_POOLS_BASH_QUERY) -> pd.DataFrame:
+def get_pools_cyber(network: str = 'bostrom',
+                    display_data: bool = False,
+                    recalculate_pools: bool = True,
+                    cyber_pools_bash_query: str = None) -> pd.DataFrame:
     """
-    Extract pools data from bostrom network
+    Extract pools data from cyber protocol network
+    :param network: cyber protocol network name
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
-    :param bostrom_pools_bash_query: bash query for getting pool data
+    :param cyber_pools_bash_query: bash query for getting pool data
     :return: dataframe with pools data
     """
-    if recalculate_pools:
-        _pools_bostrom_json = get_json_from_bash_query(bostrom_pools_bash_query)
-        _pools_bostrom_df = pd.DataFrame(_pools_bostrom_json['pools'])
-        _pools_bostrom_df.to_csv('data/bostrom_pools.csv')
-    else:
-        _pools_bostrom_df = pd.read_csv('data/bostrom_pools.csv',
-                                        converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
+    assert network in ('bostrom', 'pussy', 'space-pussy')
+    if cyber_pools_bash_query is None and network == 'bostrom':
+        cyber_pools_bash_query = BOSTROM_POOLS_BASH_QUERY
+    elif cyber_pools_bash_query is None and network in ('pussy', 'space-pussy'):
+        cyber_pools_bash_query = PUSSY_POOLS_BASH_QUERY
 
-    pandarallel.initialize(nb_workers=len(_pools_bostrom_df), verbose=1)
-    _pools_bostrom_df['balances'] = \
-        _pools_bostrom_df['reserve_account_address'].parallel_map(
+    if recalculate_pools:
+        _pools_cyber_json = get_json_from_bash_query(cyber_pools_bash_query)
+        _pools_cyber_df = pd.DataFrame(_pools_cyber_json['pools'])
+        _pools_cyber_df.to_csv('data/bostrom_pools.csv')
+    else:
+        _pools_cyber_df = pd.read_csv('data/bostrom_pools.csv',
+                                      converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
+
+    pandarallel.initialize(nb_workers=len(_pools_cyber_df), verbose=1)
+    _pools_cyber_df['balances'] = \
+        _pools_cyber_df['reserve_account_address'].parallel_map(
             lambda address: get_json_from_bash_query(
-                f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json')['balances'])
-    _pools_bostrom_df['balances'] = \
-        _pools_bostrom_df['balances'].map(lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']}
+                f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json' if network == 'bostrom'
+                else f'pussy query bank balances {address} --node {PUSSY_NODE_RPC_URL} -o json')['balances'])
+    _pools_cyber_df['balances'] = \
+        _pools_cyber_df['balances'].map(lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']}
                                                      for item in x])
-    _pools_bostrom_df['reserve_coin_denoms'] = \
-        _pools_bostrom_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
-    _pools_bostrom_df['swap_fee'] = 0.003
-    _pools_bostrom_df['network'] = 'bostrom'
+    _pools_cyber_df['reserve_coin_denoms'] = \
+        _pools_cyber_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
+    _pools_cyber_df['swap_fee'] = 0.003
+    _pools_cyber_df['network'] = 'bostrom'
     if display_data:
         print('Bostrom Pools')
-        display(HTML(_pools_bostrom_df.to_html(index=False, notebook=True, show_dimensions=False)))
-    return _pools_bostrom_df
+        display(HTML(_pools_cyber_df.to_html(index=False, notebook=True, show_dimensions=False)))
+    return _pools_cyber_df
 
 
 def get_pools_osmosis(display_data: bool = False,
@@ -108,7 +118,7 @@ def get_pools(display_data: bool = False,
               network=None,
               bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
     """
-    Extract pools data from osmosis or/and bostrom network
+    Extract pools data from osmosis, bostrom and space-pussy network
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
     :param network: `bostrom` or `osmosis` network, both of them are extracted by default
@@ -116,17 +126,21 @@ def get_pools(display_data: bool = False,
     :return: dataframe with pools data
     """
     if network is None:
-        _pools_bostrom_df = get_pools_bostrom(display_data=display_data, recalculate_pools=recalculate_pools)[
-            ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
+        _pools_bostrom_df = \
+            get_pools_cyber(network='bostrom', display_data=display_data, recalculate_pools=recalculate_pools)[
+                ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
+        _pools_pussy_df = \
+            get_pools_cyber(network='pussy', display_data=display_data, recalculate_pools=recalculate_pools)[
+                ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
         _pools_osmosis_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms', 'denoms_count']]
         _pools_df = pd.concat(
             [_pools_bostrom_df,
-             _pools_osmosis_df[(_pools_osmosis_df.denoms_count == 2) &
-                               (_pools_osmosis_df.id.isin(bostrom_related_osmo_pools))]])[
-            ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
-    elif network == 'bostrom':
-        _pools_df = get_pools_bostrom(display_data=display_data, recalculate_pools=recalculate_pools)[
+             _pools_pussy_df,
+             _pools_osmosis_df[_pools_osmosis_df.id.isin(bostrom_related_osmo_pools)]])[
+                 ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
+    elif network in ('bostrom', 'pussy', 'space-pussy'):
+        _pools_df = get_pools_cyber(network=network, display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'osmosis':
         _pools_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
@@ -169,12 +183,15 @@ def get_prices(pools_df: pd.DataFrame, display_data: bool = False) -> pd.DataFra
             _price_df.loc[_row.coin_from, _row.coin_to] = _row.price
     for _coin in _coins_unique_list:
         _price_df.loc[_coin, _coin] = 1
-    _price_df.loc['uatom in bostrom', 'uatom in osmosis'] = 1
-    _price_df.loc['uatom in osmosis', 'uatom in bostrom'] = 1
-    _price_df.loc['uosmo', 'uosmo in bostrom'] = 1
-    _price_df.loc['uosmo in bostrom', 'uosmo'] = 1
-    _price_df.loc['boot', 'boot in osmosis'] = 1
-    _price_df.loc['boot in osmosis', 'boot'] = 1
+    for _col in [['boot', 'boot in osmosis'],
+                 ['uosmo', 'uosmo in bostrom'],
+                 ['uatom in osmosis', 'uatom in bostrom'],
+                 ['udsm in osmosis', 'udsm in bostrom'],
+                 ['ujuno in osmosis', 'ujuno in bostrom'],
+                 ['pussy', 'pussy in bostrom']]:
+        if _col[0] in _coins_unique_list and _col[1] in _coins_unique_list:
+            _price_df.loc[_col[0], _col[1]] = 1
+            _price_df.loc[_col[1], _col[0]] = 1
     if display_data:
         display(HTML(_price_df.to_html(notebook=True, show_dimensions=False)))
     return _price_df
@@ -188,18 +205,19 @@ def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd
     :return: dataframe with enriched price data
     """
     _price_enriched_df = price_df.copy()
-    for _col in [['boot', 'boot in osmosis'], ['uosmo', 'uosmo in bostrom'], ['uatom in osmosis', 'uatom in bostrom']]:
-        for _index in _price_enriched_df.index:
-            if isnan(_price_enriched_df.loc[_index, _col[0]]):
-                _price_enriched_df.loc[_index, _col[0]] = _price_enriched_df.loc[_index, _col[1]]
-                _price_enriched_df.loc[_col[0], _index] = _price_enriched_df.loc[_col[1], _index]
-            elif isnan(_price_enriched_df.loc[_index, _col[1]]):
-                _price_enriched_df.loc[_index, _col[1]] = _price_enriched_df.loc[_index, _col[0]]
-                _price_enriched_df.loc[_col[1], _index] = _price_enriched_df.loc[_col[0], _index]
-    _price_enriched_df.drop(columns=['uatom in bostrom', 'uosmo in bostrom', 'boot in osmosis'],
-                            index=['uatom in bostrom', 'uosmo in bostrom', 'boot in osmosis']) \
-        .rename(columns={'uatom in osmosis': 'uatom'},
-                index={'uatom in osmosis': 'uatom'})
+    for _col in [['boot', 'boot in osmosis'],
+                 ['uosmo', 'uosmo in bostrom'],
+                 ['uatom in osmosis', 'uatom in bostrom'],
+                 ['udsm in osmosis', 'udsm in bostrom'],
+                 ['ujuno in osmosis', 'ujuno in bostrom']]:
+        if _col[0] in _price_enriched_df.index and _col[1] in _price_enriched_df.index:
+            for _index in _price_enriched_df.index:
+                if isnan(_price_enriched_df.loc[_index, _col[0]]):
+                    _price_enriched_df.loc[_index, _col[0]] = _price_enriched_df.loc[_index, _col[1]]
+                    _price_enriched_df.loc[_col[0], _index] = _price_enriched_df.loc[_col[1], _index]
+                elif isnan(_price_enriched_df.loc[_index, _col[1]]):
+                    _price_enriched_df.loc[_index, _col[1]] = _price_enriched_df.loc[_index, _col[0]]
+                    _price_enriched_df.loc[_col[1], _index] = _price_enriched_df.loc[_col[0], _index]
     if display_data:
         display(HTML(_price_enriched_df.to_html(notebook=True, show_dimensions=False)))
     return _price_enriched_df

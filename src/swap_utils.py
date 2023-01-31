@@ -6,7 +6,8 @@ from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coins
 
 from src.denom_utils import rename_denom, reverse_rename_denom
-from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, CLI_WALLET
+from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT, \
+    PUSSY_LCD_CLIENT, CLI_WALLET
 
 
 def get_pool_value_by_coin(
@@ -42,7 +43,15 @@ def get_balance(
     :param base_coin_denom: a base denom
     :return: address balance converted to base denomination and address balance by coins
     """
-    _balance_all_coins = BOSTROM_LCD_CLIENT.bank.balance(address=AccAddress(address))[0]
+    assert address[:4] in ('osmo', 'puss', 'bost')
+    if address[:4] == 'osmo':
+        _lcd_client = OSMOSIS_LCD_CLIENT
+    elif address[:4] == 'puss':
+        _lcd_client = PUSSY_LCD_CLIENT
+    else:
+        _lcd_client = BOSTROM_LCD_CLIENT
+
+    _balance_all_coins = _lcd_client.bank.balance(address=AccAddress(address))[0]
 
     _balance_in_base_coin = 0
     for _coin in _balance_all_coins.to_list():
@@ -69,8 +78,8 @@ def generate_swap_bash_query(
     """
     Generate swap CLI bash query for bostrom network
     :param coin_from_amount: coin amount from
-    :param coin_from: coin denom from
-    :param coin_to: coin denom to
+    :param coin_from_denom: coin denom from
+    :param coin_to_denom: coin denom to
     :param coins_pool_df: dataframe with a pool in which coins should be swapped
     :param price_df: dataframe with price data
     :param max_slippage: max slippage
