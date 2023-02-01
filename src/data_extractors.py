@@ -51,7 +51,7 @@ def get_pools_cyber(network: str = 'bostrom',
     _pools_cyber_df['reserve_coin_denoms'] = \
         _pools_cyber_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
     _pools_cyber_df['swap_fee'] = 0.003
-    _pools_cyber_df['network'] = 'bostrom'
+    _pools_cyber_df['network'] = network
     if display_data:
         print('Bostrom Pools')
         display(HTML(_pools_cyber_df.to_html(index=False, notebook=True, show_dimensions=False)))
@@ -130,7 +130,7 @@ def get_pools(display_data: bool = False,
             get_pools_cyber(network='bostrom', display_data=display_data, recalculate_pools=recalculate_pools)[
                 ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
         _pools_pussy_df = \
-            get_pools_cyber(network='pussy', display_data=display_data, recalculate_pools=recalculate_pools)[
+            get_pools_cyber(network='space-pussy', display_data=display_data, recalculate_pools=recalculate_pools)[
                 ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
         _pools_osmosis_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms', 'denoms_count']]
@@ -139,14 +139,14 @@ def get_pools(display_data: bool = False,
              _pools_pussy_df,
              _pools_osmosis_df[_pools_osmosis_df.id.isin(bostrom_related_osmo_pools)]])[
                  ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
-    elif network in ('bostrom', 'pussy', 'space-pussy'):
+    elif network in ('bostrom', 'space-pussy'):
         _pools_df = get_pools_cyber(network=network, display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     elif network == 'osmosis':
         _pools_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'swap_fee', 'reserve_coin_denoms']]
     else:
-        print(f'`network` parameter must be equaled `bostrom` or `osmosis`')
+        print(f'`network` parameter must be equaled `bostrom`, `space-pussy` or `osmosis`')
         return pd.DataFrame(columns=['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee'])
     return _pools_df
 
@@ -209,7 +209,9 @@ def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd
                  ['uosmo', 'uosmo in bostrom'],
                  ['uatom in osmosis', 'uatom in bostrom'],
                  ['udsm in osmosis', 'udsm in bostrom'],
-                 ['ujuno in osmosis', 'ujuno in bostrom']]:
+                 ['ujuno in osmosis', 'ujuno in bostrom'],
+                 ['pussy', 'pussy in bostrom'],
+                 ['liquidpussy', 'liquidpussy in bostrom']]:
         if _col[0] in _price_enriched_df.index and _col[1] in _price_enriched_df.index:
             for _index in _price_enriched_df.index:
                 if isnan(_price_enriched_df.loc[_index, _col[0]]):
