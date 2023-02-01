@@ -21,19 +21,26 @@ IBC_COIN_NAMES = \
      }
 
 BOSTROM_RELATED_OSMO_POOLS = (1, 596, 597, 497, 619)
-BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.bronbro.io:443'
-BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.bronbro.io/'
+
+BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'
+BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.cybernode.ai/'
 BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
+BOSTROM_CHAIN_ID = 'bostrom'
+BOSTROM_LCD_CLIENT = LCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
+
+PUSSY_NODE_RPC_URL = 'https://rpc.space-pussy.cybernode.ai:443'
+PUSSY_NODE_LCD_URL = 'https://lcd.space-pussy.cybernode.ai/'
+PUSSY_POOLS_BASH_QUERY = f'pussy query liquidity pools --node {PUSSY_NODE_RPC_URL} -o json'
+PUSSY_CHAIN_ID = 'space-pussy'
+PUSSY_LCD_CLIENT = LCDClient(chain_id=PUSSY_CHAIN_ID, url=PUSSY_NODE_LCD_URL)
 
 OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
-OSMOSIS_POOLS_API_URL = 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=750'
+OSMOSIS_POOLS_API_URL = 'https://lcd.osmosis-1.bronbro.io/osmosis/gamm/v1beta1/pools?pagination.limit=1000'  # 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
+OSMOSIS_CHAIN_ID = 'osmosis-1'
+OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL)  # , prefix='osmo')
 
 # usual pool fee
 POOL_FEE = 0.003
-
-BOSTROM_CHAIN_ID = 'bostrom'
-BOSTROM_LCD_CLIENT = LCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
-BOSTROM_ASYNC_LCD_CLIENT = AsyncLCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
 
 CLI_WALLET = '$WALLET'
