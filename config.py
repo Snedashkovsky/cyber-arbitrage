@@ -40,7 +40,7 @@ OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
 OSMOSIS_POOLS_API_URL = 'https://lcd.osmosis-1.bronbro.io/osmosis/gamm/v1beta1/pools?pagination.limit=1000'  # 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
 OSMOSIS_CHAIN_ID = 'osmosis-1'
-OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL)  # , prefix='osmo')
+OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL, prefix='osmo')
 
 # usual pool fee
 POOL_FEE = 0.003
