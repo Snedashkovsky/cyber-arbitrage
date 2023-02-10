@@ -1,8 +1,20 @@
+from sys import stdout
 import json
+from time import sleep
+from typing import Optional
 from subprocess import Popen, PIPE
 
 
-def execute_bash(bash_command: str, shell: bool = False):
+def display_sleep(delay_time: int) -> None:
+    for remaining in range(delay_time, -1, -1):
+        stdout.write("\r")
+        stdout.write("{:2d} from {:2d} seconds remaining.".format(remaining, delay_time))
+        stdout.flush()
+        sleep(1)
+    stdout.write("\n")
+
+
+def execute_bash(bash_command: str, shell: bool = False) -> tuple[Optional[str], Optional[str]]:
     if len(bash_command.split('"')) == 1:
         _bash_command_list = bash_command.split()
     elif len(bash_command.split('"')) == 2:
@@ -21,7 +33,7 @@ def execute_bash(bash_command: str, shell: bool = False):
     return popen_process.communicate(timeout=15)
 
 
-def get_json_from_bash_query(bash_command: str, shell: bool = False):
+def get_json_from_bash_query(bash_command: str, shell: bool = False) -> Optional[dict]:
     _res, _ = execute_bash(bash_command, shell=shell)
     if _res:
         return json.loads(_res.decode('utf8').replace("'", '"'))
