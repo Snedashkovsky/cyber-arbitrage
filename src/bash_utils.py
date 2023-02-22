@@ -14,7 +14,8 @@ def display_sleep(delay_time: int) -> None:
     stdout.write("\n")
 
 
-def execute_bash(bash_command: str, shell: bool = False) -> tuple[Optional[str], Optional[str]]:
+def execute_bash(bash_command: str, shell: bool = False,
+                 timeout: Optional[int] = 15) -> tuple[Optional[str], Optional[str]]:
     if len(bash_command.split('"')) == 1:
         _bash_command_list = bash_command.split()
     elif len(bash_command.split('"')) == 2:
@@ -30,7 +31,7 @@ def execute_bash(bash_command: str, shell: bool = False) -> tuple[Optional[str],
         return None, f'Cannot split bash command {bash_command}'
     popen_process = Popen([bash_command], stdout=PIPE, shell=shell, text=True) \
         if shell else Popen(_bash_command_list, stdout=PIPE)
-    return popen_process.communicate(timeout=15)
+    return popen_process.communicate(timeout=timeout)
 
 
 def get_json_from_bash_query(bash_command: str, shell: bool = False) -> Optional[dict]:
