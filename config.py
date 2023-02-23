@@ -36,7 +36,7 @@ PUSSY_NODE_RPC_URL = 'https://rpc.space-pussy.cybernode.ai:443'
 PUSSY_NODE_LCD_URL = 'https://lcd.space-pussy.cybernode.ai/'
 PUSSY_POOLS_BASH_QUERY = f'pussy query liquidity pools --node {PUSSY_NODE_RPC_URL} -o json'
 PUSSY_CHAIN_ID = 'space-pussy'
-PUSSY_LCD_CLIENT = LCDClient(chain_id=PUSSY_CHAIN_ID, url=PUSSY_NODE_LCD_URL)
+PUSSY_LCD_CLIENT = LCDClient(chain_id=PUSSY_CHAIN_ID, url=PUSSY_NODE_LCD_URL, prefix='pussy')
 
 OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
