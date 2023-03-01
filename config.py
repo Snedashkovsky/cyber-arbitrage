@@ -19,14 +19,24 @@ IBC_COIN_NAMES = \
         'ibc/9B45B8C514B76D792BEC4850AE601E0E73CE7D307A567F34038432FC80D74780': 'liquidpussy in bostrom',
         'ibc/8D9262E35CAE362FA74AE05E430550757CF8D842EC1B241F645D3CB7179AFD10': 'ujuno in bostrom',
         'ibc/C23D820C5B6009E544AFC8AF5A2FEC288108AEDBFAEFDBBDD6BE54CC23069559': 'ugraviton in bostrom',
-        'ibc/B6CAD3F7469F3FAD18ED2230A6C7B15E654AB2E1B66E1C70879C04FEF874A863': 'wei gravETH in bostrom',
+        'ibc/B6CAD3F7469F3FAD18ED2230A6C7B15E654AB2E1B66E1C70879C04FEF874A863': 'weth.grv in bostrom',
         'ibc/4B322204B4F59D770680FE4D7A565DDC3F37BFF035474B717476C66A4F83DD72': 'aevmos in bostrom',
         'ibc/CA5E8F31288514D728AFD1F0533A7F6902AA1192C88C9540F814893C3EAFE244': 'udsm in bostrom'
      }
 
-BOSTROM_RELATED_OSMO_POOLS = (1, 596, 597, 497, 619, 911, 912)
+COINS_IN_DIFFERENT_CHAINS = \
+    [['boot', 'boot in osmosis'],
+     ['uosmo', 'uosmo in bostrom'],
+     ['uatom in osmosis', 'uatom in bostrom'],
+     ['udsm in osmosis', 'udsm in bostrom'],
+     ['ujuno in osmosis', 'ujuno in bostrom'],
+     ['weth.grv in osmosis', 'weth.grv in bostrom'],
+     ['pussy', 'pussy in bostrom'],
+     ['liquidpussy', 'liquidpussy in bostrom']]
 
-BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'
+BOSTROM_RELATED_OSMO_POOLS = (1, 596, 597, 497, 619, 634, 704, 911, 912)
+
+BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.bronbro.io:443'  # 'https://rpc.bostrom.cybernode.ai:443'  #
 BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.cybernode.ai/'
 BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
 BOSTROM_CHAIN_ID = 'bostrom'

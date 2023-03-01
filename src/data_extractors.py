@@ -10,7 +10,7 @@ from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
-    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS
 
 
 def get_pools_cyber(network: str = 'bostrom',
@@ -181,12 +181,7 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
             _price_df.loc[_row.coin_from, _row.coin_to] = _row.price
     for _coin in _coins_unique_list:
         _price_df.loc[_coin, _coin] = 1
-    for _col in [['boot', 'boot in osmosis'],
-                 ['uosmo', 'uosmo in bostrom'],
-                 ['uatom in osmosis', 'uatom in bostrom'],
-                 ['udsm in osmosis', 'udsm in bostrom'],
-                 ['ujuno in osmosis', 'ujuno in bostrom'],
-                 ['pussy', 'pussy in bostrom']]:
+    for _col in COINS_IN_DIFFERENT_CHAINS:
         if _col[0] in _coins_unique_list and _col[1] in _coins_unique_list:
             _price_df.loc[_col[0], _col[1]] = 1
             _price_df.loc[_col[1], _col[0]] = 1
@@ -203,13 +198,7 @@ def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd
     :return: dataframe with enriched price data
     """
     _price_enriched_df = price_df.copy()
-    for _col in [['boot', 'boot in osmosis'],
-                 ['uosmo', 'uosmo in bostrom'],
-                 ['uatom in osmosis', 'uatom in bostrom'],
-                 ['udsm in osmosis', 'udsm in bostrom'],
-                 ['ujuno in osmosis', 'ujuno in bostrom'],
-                 ['pussy', 'pussy in bostrom'],
-                 ['liquidpussy', 'liquidpussy in bostrom']]:
+    for _col in COINS_IN_DIFFERENT_CHAINS:
         if _col[0] in _price_enriched_df.index and _col[1] in _price_enriched_df.index:
             for _index in _price_enriched_df.index:
                 if isnan(_price_enriched_df.loc[_index, _col[0]]):
