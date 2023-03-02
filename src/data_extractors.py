@@ -5,6 +5,7 @@ from math import isnan
 from IPython.core.display import display, HTML
 from pandarallel import pandarallel
 from itertools import permutations
+from typing import Optional
 
 from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
@@ -47,7 +48,7 @@ def get_pools_cyber(network: str = 'bostrom',
                 else f'pussy query bank balances {address} --node {PUSSY_NODE_RPC_URL} -o json')['balances'])
     _pools_cyber_df['balances'] = \
         _pools_cyber_df['balances'].map(lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']}
-                                                     for item in x])
+                                                   for item in x])
     _pools_cyber_df['reserve_coin_denoms'] = \
         _pools_cyber_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
     _pools_cyber_df['swap_fee'] = 0.003
@@ -103,7 +104,7 @@ def get_pools_osmosis(display_data: bool = False,
             _pools_osmosis_df[
                 ((_pools_osmosis_df.uosmo_balance.isna()) & (_pools_osmosis_df.uosmo_balance.isna())) |
                 ((_pools_osmosis_df.uosmo_balance > min_uosmo_balance) | (
-                            _pools_osmosis_df.uatom_balance > min_uosmo_balance // 10))]
+                        _pools_osmosis_df.uatom_balance > min_uosmo_balance // 10))]
     if display_data:
         print('Osmosis Pools')
         display(HTML(
@@ -116,13 +117,13 @@ def get_pools_osmosis(display_data: bool = False,
 def get_pools(display_data: bool = False,
               recalculate_pools: bool = True,
               networks=None,
-              bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
+              bostrom_related_osmo_pools: Optional[tuple] = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
     """
     Extract pools data from osmosis, bostrom and space-pussy network
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
     :param networks: a list of `bostrom`, `space-pussy` or `osmosis` networks, all of them are extracted by default
-    :param bostrom_related_osmo_pools: list of bostrom related pool ids in osmosis network
+    :param bostrom_related_osmo_pools: tuple of bostrom related pool ids in osmosis network or None for all pools
     :return: dataframe with pools data
     """
 
@@ -143,7 +144,10 @@ def get_pools(display_data: bool = False,
     if 'osmosis' in networks:
         _pools_osmosis_df = get_pools_osmosis(display_data=display_data, recalculate_pools=recalculate_pools)[
             ['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee']]
-        _pools_df = pd.concat([_pools_df, _pools_osmosis_df[_pools_osmosis_df.id.isin(bostrom_related_osmo_pools)]])
+        _pools_osmosis_df = \
+            _pools_osmosis_df[_pools_osmosis_df.id.isin(
+                bostrom_related_osmo_pools)] if bostrom_related_osmo_pools else _pools_osmosis_df
+        _pools_df = pd.concat([_pools_df, _pools_osmosis_df])
     return _pools_df
 
 
