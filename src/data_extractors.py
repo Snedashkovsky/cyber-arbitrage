@@ -11,7 +11,7 @@ from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
-    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS, POOL_FEE
 
 
 def get_pools_cyber(network: str = 'bostrom',
@@ -47,11 +47,17 @@ def get_pools_cyber(network: str = 'bostrom',
                 f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json' if network == 'bostrom'
                 else f'pussy query bank balances {address} --node {PUSSY_NODE_RPC_URL} -o json')['balances'])
     _pools_cyber_df['balances'] = \
-        _pools_cyber_df['balances'].map(lambda x: [{'denom': rename_denom(item['denom']), 'amount': item['amount']}
-                                                   for item in x])
+        _pools_cyber_df['balances'].map(lambda x: [
+            {'denom': item['denom'] + '(pussy)' if item['denom'] in (
+                'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(item['denom']),
+             'amount': item['amount']}
+            for item in x])
     _pools_cyber_df['reserve_coin_denoms'] = \
-        _pools_cyber_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
-    _pools_cyber_df['swap_fee'] = 0.003
+        _pools_cyber_df.reserve_coin_denoms.map(
+            lambda x: [_coin_denom + '(pussy)' if _coin_denom in (
+                'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(_coin_denom)
+                       for _coin_denom in x])
+    _pools_cyber_df['swap_fee'] = POOL_FEE
     _pools_cyber_df['network'] = network
     if display_data:
         print('Bostrom Pools')
@@ -222,6 +228,16 @@ def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen'
         if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and ~isnan(_price_enriched_df.loc[_index, 'boot']):
             _price_enriched_df.loc[base_coin_denom, _index] = \
                 _price_enriched_df.loc['boot', _index] * _price_enriched_df.loc[base_coin_denom, 'boot']
+    # add prices for space-pussy coins
+    for _index in _price_enriched_df.index:
+        if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and \
+                ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
+            _price_enriched_df.loc[_index, base_coin_denom] = \
+                _price_enriched_df.loc[_index, 'liquidpussy'] * _price_enriched_df.loc['liquidpussy', base_coin_denom]
+        if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and \
+                ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
+            _price_enriched_df.loc[base_coin_denom, _index] = \
+                _price_enriched_df.loc['liquidpussy', _index] * _price_enriched_df.loc[base_coin_denom, 'liquidpussy']
 
     if display_data:
         display(HTML(_price_enriched_df.to_html(notebook=True, show_dimensions=False)))
