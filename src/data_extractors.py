@@ -163,8 +163,8 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
     _coins_unique_list = list(set(np.concatenate(_coins_list).flat))
     _price_df = pd.DataFrame(columns=_coins_unique_list, index=_coins_unique_list)
 
-    _price_row_list = []
     for _, _pool_row in pools_df.iterrows():
+        _price_row_list = []
         _coins_pair = _pool_row.reserve_coin_denoms
         _balances = \
             {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
@@ -176,8 +176,8 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
                 _price_row_list.append([
                     _coin_from,
                     _coin_to,
-                    _balances[_coin_from] * (1 - _swap_fee),
-                    _balances[_coin_from] / _balances[_coin_to] * (1 - _swap_fee)])
+                    _balances[_coin_from],
+                    float(_balances[_coin_from]) / float(_balances[_coin_to]) * (1 - _swap_fee)])
         _price_overall_df = pd.DataFrame(_price_row_list, columns=['coin_from', 'coin_to', 'pool_balance', 'price'])
         _price_overall_biggest_pools_df = \
             _price_overall_df.sort_values('pool_balance').drop_duplicates(['coin_from', 'coin_to'], keep='last')
@@ -194,14 +194,17 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
     return _price_df
 
 
-def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd.DataFrame:
+def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen',
+                       display_data: bool = False) -> pd.DataFrame:
     """
     Calculate enriched prices from direct price data
+    :param base_coin_denom: coin for liquidity calculation
     :param price_df: dataframe with price data
     :param display_data: display or not enriched price data
     :return: dataframe with enriched price data
     """
     _price_enriched_df = price_df.copy()
+    # add prices from different chains
     for _col in COINS_IN_DIFFERENT_CHAINS:
         if _col[0] in _price_enriched_df.index and _col[1] in _price_enriched_df.index:
             for _index in _price_enriched_df.index:
@@ -211,6 +214,15 @@ def get_price_enriched(price_df: pd.DataFrame, display_data: bool = False) -> pd
                 elif isnan(_price_enriched_df.loc[_index, _col[1]]):
                     _price_enriched_df.loc[_index, _col[1]] = _price_enriched_df.loc[_index, _col[0]]
                     _price_enriched_df.loc[_col[1], _index] = _price_enriched_df.loc[_col[0], _index]
+    # add prices with base liquid coin
+    for _index in _price_enriched_df.index:
+        if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and ~isnan(_price_enriched_df.loc[_index, 'boot']):
+            _price_enriched_df.loc[_index, base_coin_denom] = \
+                _price_enriched_df.loc[_index, 'boot'] * _price_enriched_df.loc['boot', base_coin_denom]
+        if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and ~isnan(_price_enriched_df.loc[_index, 'boot']):
+            _price_enriched_df.loc[base_coin_denom, _index] = \
+                _price_enriched_df.loc['boot', _index] * _price_enriched_df.loc[base_coin_denom, 'boot']
+
     if display_data:
         display(HTML(_price_enriched_df.to_html(notebook=True, show_dimensions=False)))
     return _price_enriched_df
