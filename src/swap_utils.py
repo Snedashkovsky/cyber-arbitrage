@@ -65,6 +65,17 @@ def get_balance(
     return int(_balance_in_base_coin) if not np.isnan(_balance_in_base_coin) else 0, _balance_all_coins
 
 
+def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
+    """
+    Extract coin balance
+    :param balance_coins: address balance by coins
+    :param coin_denom: extracted coin denom
+    :return: extracted coin balance
+    """
+    coin_balance = [item['amount'] for item in balance_coins.to_data() if rename_denom(item['denom']) == coin_denom]
+    return int(coin_balance[0]) if len(coin_balance) > 0 else 0
+
+
 def generate_swap_bash_query(
         coin_from_amount: float,
         coin_from_denom: str,
