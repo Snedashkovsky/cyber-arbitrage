@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import numpy as np
 from math import isnan
-from IPython.core.display import display, HTML
+from IPython.display import display, HTML
 from pandarallel import pandarallel
 from itertools import permutations
 from typing import Optional
@@ -11,33 +11,33 @@ from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
-    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS, POOL_FEE
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS, CRESCENT_POOLS_API_URL, POOL_FEE
 
 
 def get_pools_cyber(network: str = 'bostrom',
                     display_data: bool = False,
                     recalculate_pools: bool = True,
-                    cyber_pools_bash_query: str = None) -> pd.DataFrame:
+                    pools_bash_query: Optional[str] = None) -> pd.DataFrame:
     """
-    Extract pools data from cyber protocol network
+    Extract pools data from a cyber protocol network
     :param network: cyber protocol network name
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
-    :param cyber_pools_bash_query: bash query for getting pool data
+    :param pools_bash_query: bash query for getting pool data
     :return: dataframe with pools data
     """
-    assert network in ('bostrom', 'pussy', 'space-pussy')
-    if cyber_pools_bash_query is None and network == 'bostrom':
-        cyber_pools_bash_query = BOSTROM_POOLS_BASH_QUERY
-    elif cyber_pools_bash_query is None and network in ('pussy', 'space-pussy'):
-        cyber_pools_bash_query = PUSSY_POOLS_BASH_QUERY
+    assert network in ('bostrom', 'space-pussy')
+    if pools_bash_query is None and network == 'bostrom':
+        pools_bash_query = BOSTROM_POOLS_BASH_QUERY
+    elif pools_bash_query is None and network == 'space-pussy':
+        pools_bash_query = PUSSY_POOLS_BASH_QUERY
 
     if recalculate_pools:
-        _pools_cyber_json = get_json_from_bash_query(cyber_pools_bash_query)
+        _pools_cyber_json = get_json_from_bash_query(pools_bash_query)
         _pools_cyber_df = pd.DataFrame(_pools_cyber_json['pools'])
-        _pools_cyber_df.to_csv('data/bostrom_pools.csv')
+        _pools_cyber_df.to_csv(f'data/{network}_pools.csv')
     else:
-        _pools_cyber_df = pd.read_csv('data/bostrom_pools.csv',
+        _pools_cyber_df = pd.read_csv(f'data/{network}_pools.csv',
                                       converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
 
     pandarallel.initialize(nb_workers=len(_pools_cyber_df), verbose=1)
@@ -60,26 +60,26 @@ def get_pools_cyber(network: str = 'bostrom',
     _pools_cyber_df['swap_fee'] = POOL_FEE
     _pools_cyber_df['network'] = network
     if display_data:
-        print('Bostrom Pools')
+        print(f'{network.capitalize()} Pools')
         display(HTML(_pools_cyber_df.to_html(index=False, notebook=True, show_dimensions=False)))
     return _pools_cyber_df
 
 
-def get_pools_osmosis(display_data: bool = False,
+def get_pools_osmosis(network: str = 'osmosis',
+                      display_data: bool = False,
                       recalculate_pools: bool = True,
-                      osmosis_pools_api_url: str = OSMOSIS_POOLS_API_URL,
-                      bostrom_related_osmo_pools: tuple = BOSTROM_RELATED_OSMO_POOLS,
+                      pools_api_url: str = OSMOSIS_POOLS_API_URL,
                       min_uosmo_balance: int = 10_000_000) -> pd.DataFrame:
     """
-    Extract pools data from osmosis network
+    Extract pools data from an osmosis network
+    :param network: osmosis protocol network name
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
-    :param osmosis_pools_api_url: API for getting pool data
-    :param bostrom_related_osmo_pools: list of bostrom related pool ids
+    :param pools_api_url: API for getting pool data
     :param min_uosmo_balance: min balance in pool for excluding empty pools from calculations
     :return: dataframe with pools data
     """
-    _pools_osmosis_json = requests.get(osmosis_pools_api_url).json()
+    _pools_osmosis_json = requests.get(pools_api_url).json()
     _pools_osmosis_df = pd.DataFrame(_pools_osmosis_json['pools'])
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
     _pools_osmosis_df = \
@@ -99,7 +99,7 @@ def get_pools_osmosis(display_data: bool = False,
         lambda x: [item['token']['denom'] for item in x])
     _pools_osmosis_df['reserve_coin_denoms'] = \
         _pools_osmosis_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
-    _pools_osmosis_df['network'] = 'osmosis'
+    _pools_osmosis_df['network'] = network
     if min_uosmo_balance:
         _pools_osmosis_df.loc[:, 'uosmo_balance'] = \
             _pools_osmosis_df.balances.map(lambda x: get_pool_value_by_coin(x, 'uosmo'))
@@ -112,12 +112,45 @@ def get_pools_osmosis(display_data: bool = False,
                 ((_pools_osmosis_df.uosmo_balance > min_uosmo_balance) | (
                         _pools_osmosis_df.uatom_balance > min_uosmo_balance // 10))]
     if display_data:
-        print('Osmosis Pools')
+        print(f'{network.capitalize()} Pools')
         display(HTML(
             _pools_osmosis_df
             .sort_values('total_weight', ascending=False).to_html(
                 index=False, notebook=True, show_dimensions=False)))
     return _pools_osmosis_df
+
+
+def get_pools_crescent(network: str = 'crescent',
+                       display_data: bool = False,
+                       recalculate_pools: bool = True,
+                       remove_disabled_pools: bool = True,
+                       pools_api_url: str = CRESCENT_POOLS_API_URL) -> pd.DataFrame:
+    """
+    Extract pools data from a crescent protocol network
+    :param network: crescent protocol network name
+    :param display_data: display or not pool data
+    :param recalculate_pools: update or not pool list
+    :param remove_disabled_pools: remove or not disabled pools
+    :param pools_api_url: API for getting pool data
+    :return: dataframe with pools data
+    """
+    assert network == 'crescent'
+    _pools_crescent_json = requests.get(pools_api_url).json()
+    _pools_crescent_df = pd.DataFrame(_pools_crescent_json['pools'])
+    _pools_crescent_df.to_csv(f'data/{network}_pools.csv')
+
+    pandarallel.initialize(nb_workers=len(_pools_crescent_df), verbose=1)
+    _pools_crescent_df['swap_fee'] = 0.0
+    _pools_crescent_df.rename(columns={'type': 'type_id'}, inplace=True)
+    _pools_crescent_df.loc[:, 'reserve_coin_denoms'] = _pools_crescent_df.loc[:, 'balances'].map(
+        lambda balances: [balances['base_coin']['denom'], balances['quote_coin']['denom']])
+    _pools_crescent_df['network'] = network
+    if remove_disabled_pools:
+        _pools_crescent_df = _pools_crescent_df[~_pools_crescent_df.disabled]
+    if display_data:
+        print(f'{network.capitalize()} Pools')
+        display(HTML(_pools_crescent_df.to_html(index=False, notebook=True, show_dimensions=False)))
+    return _pools_crescent_df
 
 
 def get_pools(display_data: bool = False,
@@ -154,6 +187,9 @@ def get_pools(display_data: bool = False,
             _pools_osmosis_df[_pools_osmosis_df.id.isin(
                 bostrom_related_osmo_pools)] if bostrom_related_osmo_pools else _pools_osmosis_df
         _pools_df = pd.concat([_pools_df, _pools_osmosis_df])
+    if 'crescent' in networks:
+        _pools_crescent_df = get_pools_crescent(display_data=display_data, recalculate_pools=recalculate_pools)
+        _pools_df = pd.concat([_pools_df, _pools_crescent_df])
     return _pools_df
 
 

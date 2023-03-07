@@ -1,25 +1,31 @@
-## Arbitrage in Bostrom Network
+## Arbitrage in Bostrom, Space-Pussy, Osmosis and Crescent Networks
 
 ### Pools
 
-[Bostrom Pools](https://cyb.ai/teleport/pools)  
-[Osmosis Pool BOOT-ATOM](https://info.osmosis.zone/pool/596)  
-[Osmosis Pool BOOT-OSMO](https://info.osmosis.zone/pool/597)  
-[Osmosis Pool ATOM-OSMO](https://info.osmosis.zone/pool/1)
+#### [Bostrom Pools](https://cyb.ai/warp)  
+#### [Space-Pussy Pools](https://cyb.ai/warp)  
+#### [Osmosis Pools](https://frontier.osmosis.zone/pools)
+- [BOOT-ATOM](https://info.osmosis.zone/pool/596)  
+- [BOOT-OSMO](https://info.osmosis.zone/pool/597)  
+- [BOOT-WETH (Gravity)](https://info.osmosis.zone/pool/911)  
+- [BOOT-WETH (Axelar)](https://info.osmosis.zone/pool/912)  
+- [BOOT-DOT](https://info.osmosis.zone/pool/919)  
+#### [Crescent Pools](https://app.crescent.network/farm)
 
-### Pools Liquidity
+
+### Bostrom and Space-Pussy Related Pools Liquidity
 
 [Pools Liquidity in GH](pools_liquidity_in_gh.ipynb)
 
-### Search the Best Arbitrage
+### Bostrom and Space-Pussy Related Search the Best Arbitrage
 
 [Search the Best Arbitrage in Bostrom and Osmosis Pools](search_arbitrage.ipynb)
 
-### Swap Optimization
+### Bostrom and Space-Pussy Swap Optimization
 [Finding the Best Way to Swap Coins](swap_optimization.ipynb)
 
 ### Price Calculation
-#### Bostrom
+#### Bostrom and Space-Pussy
 
 [Tendermint Liquidity Module Light Paper](https://github.com/tendermint/liquidity/blob/develop/doc/LiquidityModuleLightPaper_EN.pdf)
 

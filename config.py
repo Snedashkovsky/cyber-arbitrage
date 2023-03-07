@@ -37,7 +37,7 @@ COINS_IN_DIFFERENT_CHAINS = \
 
 BOSTROM_RELATED_OSMO_POOLS = (1, 596, 597, 497, 619, 634, 704, 911, 912, 919)
 
-BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'  #
+BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'
 BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.cybernode.ai/'
 BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
 BOSTROM_CHAIN_ID = 'bostrom'
@@ -51,10 +51,17 @@ PUSSY_LCD_CLIENT = LCDClient(chain_id=PUSSY_CHAIN_ID, url=PUSSY_NODE_LCD_URL, pr
 
 OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
-OSMOSIS_POOLS_API_URL = 'https://lcd.osmosis-1.bronbro.io/osmosis/gamm/v1beta1/pools?pagination.limit=1000'  # 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
+OSMOSIS_POOLS_API_URL = f'{OSMOSIS_NODE_LCD_URL}/osmosis/gamm/v1beta1/pools?pagination.limit=1000'  # 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
 OSMOSIS_CHAIN_ID = 'osmosis-1'
 OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL, prefix='osmo')
 OSMOSIS_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
+
+CRESCENT_NODE_RPC_URL = 'https://crescent-mainnet-rpc.autostake.net:443'  # https://mainnet.crescent.network:26657/
+CRESCENT_NODE_LCD_URL = 'https://crescent-mainnet-lcd.autostake.net'  # https://mainnet.crescent.network:1317/
+CRESCENT_POOLS_API_URL = f'{CRESCENT_NODE_LCD_URL}/crescent/liquidity/v1beta1/pools'
+CRESCENT_CHAIN_ID = 'crescent-1'
+CRESCENT_LCD_CLIENT = LCDClient(chain_id=CRESCENT_CHAIN_ID, url=CRESCENT_NODE_LCD_URL, prefix='cre')
+CRESCENT_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
 
 # usual pool fee
 POOL_FEE = 0.003
