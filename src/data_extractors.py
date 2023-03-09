@@ -1,11 +1,11 @@
 import requests
 import pandas as pd
 import numpy as np
-from math import isnan
+from math import isnan, sqrt
 from IPython.display import display, HTML
 from pandarallel import pandarallel
 from itertools import permutations
-from typing import Optional
+from typing import Optional, Union
 
 from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
@@ -120,10 +120,66 @@ def get_pools_osmosis(network: str = 'osmosis',
     return _pools_osmosis_df
 
 
+def get_roots_in_square_equation(a: float, b: float, c: float) -> Optional[list[float]]:
+    """
+    Get roots in square equation `a * x ^ 2 + b * x + c = 0`
+    :param a: a
+    :param b: b
+    :param c: c
+    :return: roots
+    """
+    _discriminant = b ** 2 - 4 * a * c
+    if _discriminant > 0:
+        return [(-b + sqrt(_discriminant)) / (2 * a), (-b - sqrt(_discriminant)) / (2 * a)]
+    elif _discriminant == 0:
+        return [-b / (2 * a)]
+    else:
+        print("Not solution (equation roots are not real)")
+        return None
+
+
+def get_crescent_pool_params(row: pd.Series) -> [Optional[Union[float, int]]]:
+    """
+    Get Crescent pool parameters from a pool data
+    :param row: a pool data
+    :return: list of pools parameters (price, a, b, base coin amount, quote coin amount)
+    """
+    base_coin_amount = int(row.balances['base_coin']['amount'])
+    quote_coin_amount = int(row.balances['quote_coin']['amount'])
+
+    if row.type_id == 'POOL_TYPE_BASIC' and base_coin_amount > 0:
+        return quote_coin_amount / base_coin_amount, 0, 0, base_coin_amount, quote_coin_amount
+    elif row.type_id == 'POOL_TYPE_BASIC' and base_coin_amount == 0:
+        return None, 0, 0, base_coin_amount, quote_coin_amount
+    elif row.type_id == 'POOL_TYPE_RANGED':
+        _price_min = float(row['min_price'])
+        _price_max = float(row['max_price'])
+
+        if base_coin_amount == quote_coin_amount == 0:
+            return None, None, None, 0, 0, base_coin_amount, quote_coin_amount
+
+        _price_min_max_sqrt = (_price_max * _price_min) ** 0.5
+        a = get_roots_in_square_equation(
+            a=_price_max - _price_min_max_sqrt,
+            b=-base_coin_amount * _price_min_max_sqrt - quote_coin_amount,
+            c=-base_coin_amount * quote_coin_amount
+        )[0]
+        b = a * _price_min_max_sqrt
+
+        if base_coin_amount == 0:
+            price = _price_max
+        elif quote_coin_amount == 0:
+            price = _price_min
+        else:
+            price = (a * _price_min_max_sqrt + quote_coin_amount) / (a + base_coin_amount)
+        return price, a, b, base_coin_amount, quote_coin_amount
+
+
 def get_pools_crescent(network: str = 'crescent',
                        display_data: bool = False,
                        recalculate_pools: bool = True,
                        remove_disabled_pools: bool = True,
+                       enrich_data: bool = True,
                        pools_api_url: str = CRESCENT_POOLS_API_URL) -> pd.DataFrame:
     """
     Extract pools data from a crescent protocol network
@@ -131,6 +187,7 @@ def get_pools_crescent(network: str = 'crescent',
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
     :param remove_disabled_pools: remove or not disabled pools
+    :param enrich_data: calculate or not pools params
     :param pools_api_url: API for getting pool data
     :return: dataframe with pools data
     """
@@ -147,6 +204,9 @@ def get_pools_crescent(network: str = 'crescent',
     _pools_crescent_df['network'] = network
     if remove_disabled_pools:
         _pools_crescent_df = _pools_crescent_df[~_pools_crescent_df.disabled]
+    if enrich_data:
+        _pools_crescent_df.loc[:, ['calculated_price', 'a', 'b', 'base_coin_amount', 'quote_coin_amount']] = \
+            _pools_crescent_df.apply(lambda row: pd.Series(get_crescent_pool_params(row)), axis=1).to_numpy()
     if display_data:
         print(f'{network.capitalize()} Pools')
         display(HTML(_pools_crescent_df.to_html(index=False, notebook=True, show_dimensions=False)))
