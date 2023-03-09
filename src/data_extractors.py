@@ -81,6 +81,7 @@ def get_pools_osmosis(network: str = 'osmosis',
     """
     _pools_osmosis_json = requests.get(pools_api_url).json()
     _pools_osmosis_df = pd.DataFrame(_pools_osmosis_json['pools'])
+
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
     _pools_osmosis_df = \
         _pools_osmosis_df[_pools_osmosis_df['@type'] != '/osmosis.gamm.poolmodels.stableswap.v1beta1.Pool']
@@ -100,6 +101,7 @@ def get_pools_osmosis(network: str = 'osmosis',
     _pools_osmosis_df['reserve_coin_denoms'] = \
         _pools_osmosis_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
     _pools_osmosis_df['network'] = network
+
     if min_uosmo_balance:
         _pools_osmosis_df.loc[:, 'uosmo_balance'] = \
             _pools_osmosis_df.balances.map(lambda x: get_pool_value_by_coin(x, 'uosmo'))
@@ -111,12 +113,12 @@ def get_pools_osmosis(network: str = 'osmosis',
                 ((_pools_osmosis_df.uosmo_balance.isna()) & (_pools_osmosis_df.uosmo_balance.isna())) |
                 ((_pools_osmosis_df.uosmo_balance > min_uosmo_balance) | (
                         _pools_osmosis_df.uatom_balance > min_uosmo_balance // 10))]
+
     if display_data:
         print(f'{network.capitalize()} Pools')
         display(HTML(
-            _pools_osmosis_df
-            .sort_values('total_weight', ascending=False).to_html(
-                index=False, notebook=True, show_dimensions=False)))
+            _pools_osmosis_df.sort_values('total_weight', ascending=False).to_html(index=False, notebook=True,
+                                                                                   show_dimensions=False)))
     return _pools_osmosis_df
 
 
@@ -194,19 +196,22 @@ def get_pools_crescent(network: str = 'crescent',
     assert network == 'crescent'
     _pools_crescent_json = requests.get(pools_api_url).json()
     _pools_crescent_df = pd.DataFrame(_pools_crescent_json['pools'])
-    _pools_crescent_df.to_csv(f'data/{network}_pools.csv')
 
-    pandarallel.initialize(nb_workers=len(_pools_crescent_df), verbose=1)
     _pools_crescent_df['swap_fee'] = 0.0
     _pools_crescent_df.rename(columns={'type': 'type_id'}, inplace=True)
     _pools_crescent_df.loc[:, 'reserve_coin_denoms'] = _pools_crescent_df.loc[:, 'balances'].map(
         lambda balances: [balances['base_coin']['denom'], balances['quote_coin']['denom']])
     _pools_crescent_df['network'] = network
+    _pools_crescent_df['pool_coin_supply'] = _pools_crescent_df['pool_coin_supply'].astype(float)
+    _pools_crescent_df['price'] = _pools_crescent_df['price'].fillna(0).astype(float)
+
     if remove_disabled_pools:
         _pools_crescent_df = _pools_crescent_df[~_pools_crescent_df.disabled]
+
     if enrich_data:
         _pools_crescent_df.loc[:, ['calculated_price', 'a', 'b', 'base_coin_amount', 'quote_coin_amount']] = \
             _pools_crescent_df.apply(lambda row: pd.Series(get_crescent_pool_params(row)), axis=1).to_numpy()
+
     if display_data:
         print(f'{network.capitalize()} Pools')
         display(HTML(_pools_crescent_df.to_html(index=False, notebook=True, show_dimensions=False)))
