@@ -65,6 +65,17 @@ def get_balance(
     return int(_balance_in_base_coin) if not np.isnan(_balance_in_base_coin) else 0, _balance_all_coins
 
 
+def get_total_balance(addresses: list[str], price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen') -> [int, Coins]:
+    _initial_balance = 0
+    _initial_balance_all_coins = Coins('0boot')
+    for _address in addresses:
+        _initial_balance_item, _initial_balance_all_coins_item = get_balance(address=_address, price_df=price_df,
+                                                                             base_coin_denom=base_coin_denom)
+        _initial_balance += _initial_balance_item
+        _initial_balance_all_coins = _initial_balance_all_coins + _initial_balance_all_coins_item
+    return _initial_balance, _initial_balance_all_coins
+
+
 def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
     """
     Extract coin balance
@@ -131,7 +142,7 @@ def generate_swap_bash_queries(
         _coin_from_pool_amount = get_pool_value_by_coin(_coins_pool_df.balances.values[0], _coin_from_denom)
         _coin_to_pool_amount = get_pool_value_by_coin(_coins_pool_df.balances.values[0], _coin_to_denom)
         _coin_to_amount = _coin_from_amount * _coin_to_pool_amount / (
-                    _coin_from_pool_amount + 2 * _coin_from_amount) * (1 - POOL_FEE)
+                _coin_from_pool_amount + 2 * _coin_from_amount) * (1 - POOL_FEE)
         _coin2_way_queries.append(
             generate_swap_bash_query(
                 coin_from_amount=_coin_from_amount, coin_from_denom=_coin_from_denom, coin_to_denom=_coin_to_denom,

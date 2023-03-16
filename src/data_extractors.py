@@ -322,23 +322,29 @@ def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen'
                     _price_enriched_df.loc[_index, _col[1]] = _price_enriched_df.loc[_index, _col[0]]
                     _price_enriched_df.loc[_col[1], _index] = _price_enriched_df.loc[_col[0], _index]
     # add prices with base liquid coin
-    for _index in _price_enriched_df.index:
-        if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and ~isnan(_price_enriched_df.loc[_index, 'boot']):
-            _price_enriched_df.loc[_index, base_coin_denom] = \
-                _price_enriched_df.loc[_index, 'boot'] * _price_enriched_df.loc['boot', base_coin_denom]
-        if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and ~isnan(_price_enriched_df.loc[_index, 'boot']):
-            _price_enriched_df.loc[base_coin_denom, _index] = \
-                _price_enriched_df.loc['boot', _index] * _price_enriched_df.loc[base_coin_denom, 'boot']
+    if 'boot' in _price_enriched_df.index:
+        for _index in _price_enriched_df.index:
+            if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and ~isnan(
+                    _price_enriched_df.loc[_index, 'boot']):
+                _price_enriched_df.loc[_index, base_coin_denom] = \
+                    _price_enriched_df.loc[_index, 'boot'] * _price_enriched_df.loc['boot', base_coin_denom]
+            if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and ~isnan(
+                    _price_enriched_df.loc[_index, 'boot']):
+                _price_enriched_df.loc[base_coin_denom, _index] = \
+                    _price_enriched_df.loc['boot', _index] * _price_enriched_df.loc[base_coin_denom, 'boot']
     # add prices for space-pussy coins
-    for _index in _price_enriched_df.index:
-        if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and \
-                ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
-            _price_enriched_df.loc[_index, base_coin_denom] = \
-                _price_enriched_df.loc[_index, 'liquidpussy'] * _price_enriched_df.loc['liquidpussy', base_coin_denom]
-        if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and \
-                ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
-            _price_enriched_df.loc[base_coin_denom, _index] = \
-                _price_enriched_df.loc['liquidpussy', _index] * _price_enriched_df.loc[base_coin_denom, 'liquidpussy']
+    if 'liquidpussy' in _price_enriched_df.index:
+        for _index in _price_enriched_df.index:
+            if isnan(_price_enriched_df.loc[_index, base_coin_denom]) and \
+                    ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
+                _price_enriched_df.loc[_index, base_coin_denom] = \
+                    _price_enriched_df.loc[_index, 'liquidpussy'] * _price_enriched_df.loc[
+                        'liquidpussy', base_coin_denom]
+            if isnan(_price_enriched_df.loc[base_coin_denom, _index]) and \
+                    ~isnan(_price_enriched_df.loc[_index, 'liquidpussy']):
+                _price_enriched_df.loc[base_coin_denom, _index] = \
+                    _price_enriched_df.loc['liquidpussy', _index] * _price_enriched_df.loc[
+                        base_coin_denom, 'liquidpussy']
 
     if display_data:
         display(HTML(_price_enriched_df.to_html(notebook=True, show_dimensions=False)))
