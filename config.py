@@ -28,10 +28,25 @@ IBC_COIN_NAMES = \
 COINS_IN_DIFFERENT_CHAINS = \
     [['boot', 'boot in osmosis'],
      ['uosmo', 'uosmo in bostrom'],
-     ['uatom in osmosis', 'uatom in bostrom'],
-     ['udsm in osmosis', 'udsm in bostrom'],
-     ['ujuno in osmosis', 'ujuno in bostrom'],
-     ['weth.grv in osmosis', 'weth.grv in bostrom'],
+     ['uatom', 'uatom in osmosis', 'uatom in bostrom'],
+     ['udsm', 'udsm in osmosis', 'udsm in bostrom'],
+     ['ujuno', 'ujuno in osmosis', 'ujuno in bostrom'],
+     ['wei', 'weth.grv in osmosis', 'weth.grv in bostrom'],
+     ['pussy', 'pussy in bostrom'],
+     ['liquidpussy', 'liquidpussy in bostrom']]
+
+
+INTERCHANGEABLE_IBC_COINS = \
+    [['boot', 'boot in osmosis'],
+     ['uosmo', 'uosmo in bostrom'],
+     ['uatom', 'uatom in osmosis'],
+     ['uatom', 'uatom in bostrom'],
+     ['udsm', 'udsm in osmosis'],
+     ['udsm', 'udsm in bostrom'],
+     ['ujuno', 'ujuno in osmosis'],
+     ['ujuno', 'ujuno in bostrom'],
+     ['wei', 'weth.grv in osmosis'],
+     ['wei', 'weth.grv in bostrom'],
      ['pussy', 'pussy in bostrom'],
      ['liquidpussy', 'liquidpussy in bostrom']]
 

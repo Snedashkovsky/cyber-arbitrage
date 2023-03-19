@@ -4,14 +4,14 @@ import numpy as np
 from math import isnan, sqrt
 from IPython.display import display, HTML
 from pandarallel import pandarallel
-from itertools import permutations
+from itertools import permutations, combinations, chain
 from typing import Optional, Union
 
 from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
-    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, COINS_IN_DIFFERENT_CHAINS, CRESCENT_POOLS_API_URL, POOL_FEE
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, INTERCHANGEABLE_IBC_COINS, COINS_IN_DIFFERENT_CHAINS, CRESCENT_POOLS_API_URL, POOL_FEE
 
 
 def get_pools_cyber(network: str = 'bostrom',
@@ -39,26 +39,27 @@ def get_pools_cyber(network: str = 'bostrom',
     else:
         _pools_cyber_df = pd.read_csv(f'data/{network}_pools.csv',
                                       converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
+    _pools_cyber_df['id'] = _pools_cyber_df['id'].astype(int)
 
     pandarallel.initialize(nb_workers=len(_pools_cyber_df), verbose=1)
-    _pools_cyber_df['balances'] = \
+    _pools_cyber_df.loc[:, 'balances'] = \
         _pools_cyber_df['reserve_account_address'].parallel_map(
             lambda address: get_json_from_bash_query(
                 f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json' if network == 'bostrom'
                 else f'pussy query bank balances {address} --node {PUSSY_NODE_RPC_URL} -o json')['balances'])
-    _pools_cyber_df['balances'] = \
+    _pools_cyber_df.loc[:, 'balances'] = \
         _pools_cyber_df['balances'].map(lambda x: [
             {'denom': item['denom'] + '(pussy)' if item['denom'] in (
                 'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(item['denom']),
              'amount': item['amount']}
             for item in x])
-    _pools_cyber_df['reserve_coin_denoms'] = \
+    _pools_cyber_df.loc[:, 'reserve_coin_denoms'] = \
         _pools_cyber_df.reserve_coin_denoms.map(
             lambda x: [_coin_denom + '(pussy)' if _coin_denom in (
                 'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(_coin_denom)
                        for _coin_denom in x])
-    _pools_cyber_df['swap_fee'] = POOL_FEE
-    _pools_cyber_df['network'] = network
+    _pools_cyber_df.loc[:, 'swap_fee'] = POOL_FEE
+    _pools_cyber_df.loc[:, 'network'] = network
     if display_data:
         print(f'{network.capitalize()} Pools')
         display(HTML(_pools_cyber_df.to_html(index=False, notebook=True, show_dimensions=False)))
@@ -85,22 +86,22 @@ def get_pools_osmosis(network: str = 'osmosis',
     _pools_osmosis_df['id'] = _pools_osmosis_df['id'].astype(int)
     _pools_osmosis_df = \
         _pools_osmosis_df[_pools_osmosis_df['@type'] != '/osmosis.gamm.poolmodels.stableswap.v1beta1.Pool']
-    _pools_osmosis_df['type_id'] = _pools_osmosis_df['@type'].map(
+    _pools_osmosis_df.loc[:, 'type_id'] = _pools_osmosis_df['@type'].map(
         lambda x: 1 if x == '/osmosis.gamm.v1beta1.Pool' else 0)
     _pools_osmosis_df['total_weight'] = _pools_osmosis_df['total_weight'].fillna(0).astype(int)
-    _pools_osmosis_df['balances'] = _pools_osmosis_df['pool_assets'].map(
+    _pools_osmosis_df.loc[:, 'balances'] = _pools_osmosis_df['pool_assets'].map(
         lambda x: [
             {'denom': rename_denom(item['token']['denom']),
              'amount': item['token']['amount'],
              'weight': item['weight']} for item in x])
-    _pools_osmosis_df['denoms_count'] = _pools_osmosis_df['pool_assets'].map(lambda x: len(x))
-    _pools_osmosis_df['swap_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['swap_fee']))
-    _pools_osmosis_df['exit_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['exit_fee']))
-    _pools_osmosis_df['reserve_coin_denoms'] = _pools_osmosis_df['pool_assets'].map(
+    _pools_osmosis_df.loc[:, 'denoms_count'] = _pools_osmosis_df['pool_assets'].map(lambda x: len(x))
+    _pools_osmosis_df.loc[:, 'swap_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['swap_fee']))
+    _pools_osmosis_df.loc[:, 'exit_fee'] = _pools_osmosis_df['pool_params'].map(lambda x: float(x['exit_fee']))
+    _pools_osmosis_df.loc[:, 'reserve_coin_denoms'] = _pools_osmosis_df['pool_assets'].map(
         lambda x: [item['token']['denom'] for item in x])
-    _pools_osmosis_df['reserve_coin_denoms'] = \
+    _pools_osmosis_df.loc[:, 'reserve_coin_denoms'] = \
         _pools_osmosis_df['reserve_coin_denoms'].map(lambda x: [rename_denom(item) for item in x])
-    _pools_osmosis_df['network'] = network
+    _pools_osmosis_df.loc[:, 'network'] = network
 
     if min_uosmo_balance:
         _pools_osmosis_df.loc[:, 'uosmo_balance'] = \
@@ -197,6 +198,7 @@ def get_pools_crescent(network: str = 'crescent',
     _pools_crescent_json = requests.get(pools_api_url).json()
     _pools_crescent_df = pd.DataFrame(_pools_crescent_json['pools'])
 
+    _pools_crescent_df['id'] = _pools_crescent_df['id'].astype(int)
     _pools_crescent_df['swap_fee'] = 0.0
     _pools_crescent_df.rename(columns={'type': 'type_id'}, inplace=True)
     _pools_crescent_df.loc[:, 'reserve_coin_denoms'] = _pools_crescent_df.loc[:, 'balances'].map(
@@ -292,7 +294,7 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
             _price_df.loc[_row.coin_from, _row.coin_to] = _row.price
     for _coin in _coins_unique_list:
         _price_df.loc[_coin, _coin] = 1
-    for _col in COINS_IN_DIFFERENT_CHAINS:
+    for _col in INTERCHANGEABLE_IBC_COINS:
         if _col[0] in _coins_unique_list and _col[1] in _coins_unique_list:
             _price_df.loc[_col[0], _col[1]] = 1
             _price_df.loc[_col[1], _col[0]] = 1
@@ -312,7 +314,9 @@ def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen'
     """
     _price_enriched_df = price_df.copy()
     # add prices from different chains
-    for _col in COINS_IN_DIFFERENT_CHAINS:
+    coins_in_different_chains = \
+        list(chain.from_iterable([list(combinations(item, 2)) for item in COINS_IN_DIFFERENT_CHAINS]))
+    for _col in coins_in_different_chains:
         if _col[0] in _price_enriched_df.index and _col[1] in _price_enriched_df.index:
             for _index in _price_enriched_df.index:
                 if isnan(_price_enriched_df.loc[_index, _col[0]]):
