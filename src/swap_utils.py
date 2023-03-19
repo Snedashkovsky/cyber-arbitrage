@@ -7,7 +7,7 @@ from cyber_sdk.core.coins import Coins
 
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT, \
-    PUSSY_LCD_CLIENT, CLI_WALLET
+    PUSSY_LCD_CLIENT, COSMOSHUB_LCD_CLIENT, CLI_WALLET
 
 
 def get_pool_value_by_coin(
@@ -43,11 +43,13 @@ def get_balance(
     :param base_coin_denom: a base denom
     :return: address balance converted to base denomination and address balance by coins
     """
-    assert address[:4] in ('osmo', 'puss', 'bost')
+    assert address[:4] in ('osmo', 'puss', 'bost', 'cosm')
     if address[:4] == 'osmo':
         _lcd_client = OSMOSIS_LCD_CLIENT
     elif address[:4] == 'puss':
         _lcd_client = PUSSY_LCD_CLIENT
+    elif address[:4] == 'cosm':
+        _lcd_client = COSMOSHUB_LCD_CLIENT
     else:
         _lcd_client = BOSTROM_LCD_CLIENT
 
