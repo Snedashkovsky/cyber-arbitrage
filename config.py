@@ -78,6 +78,11 @@ CRESCENT_CHAIN_ID = 'crescent-1'
 CRESCENT_LCD_CLIENT = LCDClient(chain_id=CRESCENT_CHAIN_ID, url=CRESCENT_NODE_LCD_URL, prefix='cre')
 CRESCENT_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
 
+COSMOSHUB_NODE_RPC_URL = 'https://rpc.cosmoshub-4.bronbro.io:443'
+COSMOSHUB_NODE_LCD_URL = 'https://lcd.cosmoshub-4.bronbro.io'
+COSMOSHUB_CHAIN_ID = 'cosmoshub-4'
+COSMOSHUB_LCD_CLIENT = LCDClient(chain_id=COSMOSHUB_CHAIN_ID, url=COSMOSHUB_NODE_LCD_URL, prefix='cosmos')
+
 # usual pool fee
 POOL_FEE = 0.003
 
