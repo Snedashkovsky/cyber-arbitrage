@@ -11,7 +11,8 @@ from src.bash_utils import get_json_from_bash_query
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
-    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, INTERCHANGEABLE_IBC_COINS, COINS_IN_DIFFERENT_CHAINS, CRESCENT_POOLS_API_URL, POOL_FEE
+    PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, INTERCHANGEABLE_IBC_COINS, COINS_IN_DIFFERENT_CHAINS, \
+    CRESCENT_POOLS_API_URL, POOL_FEE
 
 
 def get_pools_cyber(network: str = 'bostrom',
@@ -260,16 +261,20 @@ def get_pools(display_data: bool = False,
     return _pools_df
 
 
-def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: bool = False) -> pd.DataFrame:
+def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: bool = False,
+               extra_coins: Optional[list] = None) -> pd.DataFrame:
     """
     Calculate direct prices from pools data
     :param pools_df: dataframe with pools data
     :param zero_fee: calculations without|with pool fees
     :param display_data: display or not price data
+    :param extra_coins: coins that are not in a pools, but are needed to calculate a price
     :return: dataframe with price data
     """
     _coins_list = list(pools_df['reserve_coin_denoms'])
-    _coins_unique_list = list(set(np.concatenate(_coins_list).flat))
+    if extra_coins is None:
+        extra_coins = ['uatom']
+    _coins_unique_list = list(set(np.concatenate(_coins_list).flat)) + extra_coins
     _price_df = pd.DataFrame(columns=_coins_unique_list, index=_coins_unique_list)
 
     for _, _pool_row in pools_df.iterrows():
