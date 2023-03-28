@@ -280,10 +280,15 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
     for _, _pool_row in pools_df.iterrows():
         _price_row_list = []
         _coins_pair = _pool_row.reserve_coin_denoms
-        _balances = \
-            {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
-                item['amount'])
-             for item in _pool_row.balances}
+        if _pool_row.network != 'crescent':
+            _balances = \
+                {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
+                    item['amount'])
+                 for item in _pool_row.balances}
+        else:
+            _balances = \
+                {_balance_item['denom']: np.float64(_balance_item['amount'])
+                 for _, _balance_item in _pool_row.balances.items()}
         if _balances:
             for _coin_from, _coin_to in permutations(_coins_pair, 2):
                 _swap_fee = _pool_row.swap_fee if not zero_fee else 0

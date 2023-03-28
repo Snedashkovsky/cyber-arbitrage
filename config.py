@@ -71,8 +71,8 @@ OSMOSIS_CHAIN_ID = 'osmosis-1'
 OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL, prefix='osmo')
 OSMOSIS_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
 
-CRESCENT_NODE_RPC_URL = 'https://crescent-mainnet-rpc.autostake.net:443'  # https://mainnet.crescent.network:26657/
-CRESCENT_NODE_LCD_URL = 'https://crescent-mainnet-lcd.autostake.net'  # https://mainnet.crescent.network:1317/
+CRESCENT_NODE_RPC_URL = 'https://mainnet.crescent.network:26657'  # 'https://crescent-mainnet-rpc.autostake.net:443'
+CRESCENT_NODE_LCD_URL = 'https://mainnet.crescent.network:1317'  # 'https://crescent-mainnet-lcd.autostake.net'
 CRESCENT_POOLS_API_URL = f'{CRESCENT_NODE_LCD_URL}/crescent/liquidity/v1beta1/pools'
 CRESCENT_CHAIN_ID = 'crescent-1'
 CRESCENT_LCD_CLIENT = LCDClient(chain_id=CRESCENT_CHAIN_ID, url=CRESCENT_NODE_LCD_URL, prefix='cre')
