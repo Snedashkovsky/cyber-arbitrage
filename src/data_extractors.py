@@ -148,8 +148,8 @@ def get_crescent_pool_params(row: pd.Series) -> [Optional[Union[float, int]]]:
     :param row: a pool data
     :return: list of pools parameters (price, a, b, base coin amount, quote coin amount)
     """
-    base_coin_amount = int(row.balances['base_coin']['amount'])
-    quote_coin_amount = int(row.balances['quote_coin']['amount'])
+    base_coin_amount = int(row.balances_crescent['base_coin']['amount'])
+    quote_coin_amount = int(row.balances_crescent['quote_coin']['amount'])
 
     if row.type_id == 'POOL_TYPE_BASIC' and base_coin_amount > 0:
         return quote_coin_amount / base_coin_amount, 0, 0, base_coin_amount, quote_coin_amount
@@ -184,7 +184,8 @@ def get_pools_crescent(network: str = 'crescent',
                        recalculate_pools: bool = True,
                        remove_disabled_pools: bool = True,
                        enrich_data: bool = True,
-                       pools_api_url: str = CRESCENT_POOLS_API_URL) -> pd.DataFrame:
+                       pools_api_url: str = CRESCENT_POOLS_API_URL,
+                       base_coin_denom: str = 'ubcre') -> pd.DataFrame:
     """
     Extract pools data from a crescent protocol network
     :param network: crescent protocol network name
@@ -193,6 +194,7 @@ def get_pools_crescent(network: str = 'crescent',
     :param remove_disabled_pools: remove or not disabled pools
     :param enrich_data: calculate or not pools params
     :param pools_api_url: API for getting pool data
+    :param base_coin_denom: base coin denom
     :return: dataframe with pools data
     """
     assert network == 'crescent'
@@ -202,8 +204,11 @@ def get_pools_crescent(network: str = 'crescent',
     _pools_crescent_df['id'] = _pools_crescent_df['id'].astype(int)
     _pools_crescent_df['swap_fee'] = 0.0
     _pools_crescent_df.rename(columns={'type': 'type_id'}, inplace=True)
-    _pools_crescent_df.loc[:, 'reserve_coin_denoms'] = _pools_crescent_df.loc[:, 'balances'].map(
-        lambda balances: [balances['base_coin']['denom'], balances['quote_coin']['denom']])
+    _pools_crescent_df.loc[:, 'balances_crescent'] = _pools_crescent_df.loc[:, 'balances']
+    _pools_crescent_df.loc[:, 'balances'] = _pools_crescent_df.loc[:, 'balances'].map(
+        lambda balances: [coin for coin_type, coin in balances.items()])
+    _pools_crescent_df.loc[:, 'reserve_coin_denoms'] = _pools_crescent_df.loc[:, 'balances_crescent'].map(
+        lambda balances_crescent: [balances_crescent['base_coin']['denom'], balances_crescent['quote_coin']['denom']])
     _pools_crescent_df['network'] = network
     _pools_crescent_df['pool_coin_supply'] = _pools_crescent_df['pool_coin_supply'].astype(float)
     _pools_crescent_df['price'] = _pools_crescent_df['price'].fillna(0).astype(float)
@@ -280,15 +285,10 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
     for _, _pool_row in pools_df.iterrows():
         _price_row_list = []
         _coins_pair = _pool_row.reserve_coin_denoms
-        if _pool_row.network != 'crescent':
-            _balances = \
-                {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
-                    item['amount'])
-                 for item in _pool_row.balances}
-        else:
-            _balances = \
-                {_balance_item['denom']: np.float64(_balance_item['amount'])
-                 for _, _balance_item in _pool_row.balances.items()}
+        _balances = \
+            {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
+                item['amount'])
+             for item in _pool_row.balances}
         if _balances:
             for _coin_from, _coin_to in permutations(_coins_pair, 2):
                 _swap_fee = _pool_row.swap_fee if not zero_fee else 0
