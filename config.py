@@ -22,16 +22,33 @@ IBC_COIN_NAMES = \
         'ibc/C23D820C5B6009E544AFC8AF5A2FEC288108AEDBFAEFDBBDD6BE54CC23069559': 'ugraviton in bostrom',
         'ibc/B6CAD3F7469F3FAD18ED2230A6C7B15E654AB2E1B66E1C70879C04FEF874A863': 'weth.grv in bostrom',
         'ibc/4B322204B4F59D770680FE4D7A565DDC3F37BFF035474B717476C66A4F83DD72': 'aevmos in bostrom',
-        'ibc/CA5E8F31288514D728AFD1F0533A7F6902AA1192C88C9540F814893C3EAFE244': 'udsm in bostrom'
+        'ibc/CA5E8F31288514D728AFD1F0533A7F6902AA1192C88C9540F814893C3EAFE244': 'udsm in bostrom',
+
+        'ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9': 'uatom in crescent'
      }
 
 COINS_IN_DIFFERENT_CHAINS = \
     [['boot', 'boot in osmosis'],
      ['uosmo', 'uosmo in bostrom'],
-     ['uatom in osmosis', 'uatom in bostrom'],
-     ['udsm in osmosis', 'udsm in bostrom'],
-     ['ujuno in osmosis', 'ujuno in bostrom'],
-     ['weth.grv in osmosis', 'weth.grv in bostrom'],
+     ['uatom', 'uatom in osmosis', 'uatom in bostrom'],
+     ['udsm', 'udsm in osmosis', 'udsm in bostrom'],
+     ['ujuno', 'ujuno in osmosis', 'ujuno in bostrom'],
+     ['wei', 'weth.grv in osmosis', 'weth.grv in bostrom'],
+     ['pussy', 'pussy in bostrom'],
+     ['liquidpussy', 'liquidpussy in bostrom']]
+
+
+INTERCHANGEABLE_IBC_COINS = \
+    [['boot', 'boot in osmosis'],
+     ['uosmo', 'uosmo in bostrom'],
+     ['uatom', 'uatom in osmosis'],
+     ['uatom', 'uatom in bostrom'],
+     ['udsm', 'udsm in osmosis'],
+     ['udsm', 'udsm in bostrom'],
+     ['ujuno', 'ujuno in osmosis'],
+     ['ujuno', 'ujuno in bostrom'],
+     ['wei', 'weth.grv in osmosis'],
+     ['wei', 'weth.grv in bostrom'],
      ['pussy', 'pussy in bostrom'],
      ['liquidpussy', 'liquidpussy in bostrom']]
 
@@ -56,12 +73,17 @@ OSMOSIS_CHAIN_ID = 'osmosis-1'
 OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL, prefix='osmo')
 OSMOSIS_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
 
-CRESCENT_NODE_RPC_URL = 'https://crescent-mainnet-rpc.autostake.net:443'  # https://mainnet.crescent.network:26657/
-CRESCENT_NODE_LCD_URL = 'https://crescent-mainnet-lcd.autostake.net'  # https://mainnet.crescent.network:1317/
+CRESCENT_NODE_RPC_URL = 'https://mainnet.crescent.network:26657'  # 'https://crescent-mainnet-rpc.autostake.net:443'
+CRESCENT_NODE_LCD_URL = 'https://mainnet.crescent.network:1317'  # 'https://crescent-mainnet-lcd.autostake.net'
 CRESCENT_POOLS_API_URL = f'{CRESCENT_NODE_LCD_URL}/crescent/liquidity/v1beta1/pools'
 CRESCENT_CHAIN_ID = 'crescent-1'
 CRESCENT_LCD_CLIENT = LCDClient(chain_id=CRESCENT_CHAIN_ID, url=CRESCENT_NODE_LCD_URL, prefix='cre')
 CRESCENT_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
+
+COSMOSHUB_NODE_RPC_URL = 'https://rpc.cosmoshub-4.bronbro.io:443'
+COSMOSHUB_NODE_LCD_URL = 'https://lcd.cosmoshub-4.bronbro.io'
+COSMOSHUB_CHAIN_ID = 'cosmoshub-4'
+COSMOSHUB_LCD_CLIENT = LCDClient(chain_id=COSMOSHUB_CHAIN_ID, url=COSMOSHUB_NODE_LCD_URL, prefix='cosmos')
 
 # usual pool fee
 POOL_FEE = 0.003

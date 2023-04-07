@@ -34,8 +34,9 @@ def execute_bash(bash_command: str, shell: bool = False,
     return popen_process.communicate(timeout=timeout)
 
 
-def get_json_from_bash_query(bash_command: str, shell: bool = False) -> Optional[dict]:
-    _res, _ = execute_bash(bash_command, shell=shell)
+def get_json_from_bash_query(bash_command: str, shell: bool = False,
+                             timeout: Optional[int] = 15) -> Optional[dict]:
+    _res, _ = execute_bash(bash_command, shell=shell, timeout=timeout)
     if _res:
         return json.loads(_res.decode('utf8').replace("'", '"'))
     return

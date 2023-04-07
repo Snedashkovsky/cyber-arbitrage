@@ -7,7 +7,7 @@ from cyber_sdk.core.coins import Coins
 
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT, \
-    PUSSY_LCD_CLIENT, CLI_WALLET
+    PUSSY_LCD_CLIENT, COSMOSHUB_LCD_CLIENT, CRESCENT_LCD_CLIENT, CLI_WALLET
 
 
 def get_pool_value_by_coin(
@@ -35,19 +35,25 @@ def get_pool_value_by_coin(
 def get_balance(
         address: str,
         price_df: pd.DataFrame,
-        base_coin_denom: str = 'hydrogen') -> [int, Coins]:
+        base_coin_denom: str = 'hydrogen',
+        display_exceptions: bool = False) -> [int, Coins]:
     """
     Extract address balance by coins and convert it to base denomination
     :param address: address
     :param price_df: dataframe with price data
     :param base_coin_denom: a base denom
+    :param display_exceptions: display or not exceptions about finding coin in price_df
     :return: address balance converted to base denomination and address balance by coins
     """
-    assert address[:4] in ('osmo', 'puss', 'bost')
+    assert address[:4] in ('osmo', 'puss', 'bost', 'cosm', 'cre1')
     if address[:4] == 'osmo':
         _lcd_client = OSMOSIS_LCD_CLIENT
     elif address[:4] == 'puss':
         _lcd_client = PUSSY_LCD_CLIENT
+    elif address[:4] == 'cosm':
+        _lcd_client = COSMOSHUB_LCD_CLIENT
+    elif address[:3] == 'cre':
+        _lcd_client = CRESCENT_LCD_CLIENT
     else:
         _lcd_client = BOSTROM_LCD_CLIENT
 
@@ -60,9 +66,34 @@ def get_balance(
             _balance_in_base_coin += _coin.amount * price_df.loc[base_coin_denom, _coin_denom] \
                 if price_df.loc[base_coin_denom, _coin_denom] > 0 else 0
         except KeyError:
-            print(f'{_coin_denom} not found in price_df')
+            if display_exceptions:
+                print(f'{_coin_denom} not found in price_df')
             pass
     return int(_balance_in_base_coin) if not np.isnan(_balance_in_base_coin) else 0, _balance_all_coins
+
+
+def get_total_balance(
+        addresses: list[str],
+        price_df: pd.DataFrame,
+        base_coin_denom: str = 'hydrogen',
+        display_exceptions: bool = False) -> [int, Coins]:
+    """
+    Extract addresses balance by coins and convert it to base denomination
+    :param addresses: list of addresses
+    :param price_df: dataframe with price data
+    :param base_coin_denom: a base denom
+    :param display_exceptions: display or not exceptions about finding coin in price_df
+    :return: total addresses balance converted to base denomination and total addresses balance by coins
+    """
+    _initial_balance = 0
+    _initial_balance_all_coins = Coins()
+    for _address in addresses:
+        _initial_balance_item, _initial_balance_all_coins_item = get_balance(address=_address, price_df=price_df,
+                                                                             base_coin_denom=base_coin_denom,
+                                                                             display_exceptions=display_exceptions)
+        _initial_balance += _initial_balance_item
+        _initial_balance_all_coins = _initial_balance_all_coins + _initial_balance_all_coins_item
+    return _initial_balance, _initial_balance_all_coins
 
 
 def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
@@ -131,7 +162,7 @@ def generate_swap_bash_queries(
         _coin_from_pool_amount = get_pool_value_by_coin(_coins_pool_df.balances.values[0], _coin_from_denom)
         _coin_to_pool_amount = get_pool_value_by_coin(_coins_pool_df.balances.values[0], _coin_to_denom)
         _coin_to_amount = _coin_from_amount * _coin_to_pool_amount / (
-                    _coin_from_pool_amount + 2 * _coin_from_amount) * (1 - POOL_FEE)
+                _coin_from_pool_amount + 2 * _coin_from_amount) * (1 - POOL_FEE)
         _coin2_way_queries.append(
             generate_swap_bash_query(
                 coin_from_amount=_coin_from_amount, coin_from_denom=_coin_from_denom, coin_to_denom=_coin_to_denom,
