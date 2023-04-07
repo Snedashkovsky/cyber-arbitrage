@@ -18,13 +18,15 @@ from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS
 def get_pools_cyber(network: str = 'bostrom',
                     display_data: bool = False,
                     recalculate_pools: bool = True,
-                    pools_bash_query: Optional[str] = None) -> pd.DataFrame:
+                    pools_bash_query: Optional[str] = None,
+                    nb_balance_workers: int = 10) -> pd.DataFrame:
     """
     Extract pools data from a cyber protocol network
     :param network: cyber protocol network name
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
     :param pools_bash_query: bash query for getting pool data
+    :param nb_balance_workers: number of workers for pools balance extraction
     :return: dataframe with pools data
     """
     assert network in ('bostrom', 'space-pussy')
@@ -42,7 +44,7 @@ def get_pools_cyber(network: str = 'bostrom',
                                       converters={'reserve_coin_denoms': lambda x: x.strip("['']").split("', '")})
     _pools_cyber_df['id'] = _pools_cyber_df['id'].astype(int)
 
-    pandarallel.initialize(nb_workers=len(_pools_cyber_df), verbose=1)
+    pandarallel.initialize(nb_workers=min(len(_pools_cyber_df), nb_balance_workers), verbose=1)
     _pools_cyber_df.loc[:, 'balances'] = \
         _pools_cyber_df['reserve_account_address'].parallel_map(
             lambda address: get_json_from_bash_query(
@@ -175,7 +177,7 @@ def get_crescent_pool_params(row: pd.Series) -> [Optional[Union[float, int]]]:
         elif quote_coin_amount == 0:
             price = _price_min
         else:
-            price = (a * _price_min_max_sqrt + quote_coin_amount) / (a + base_coin_amount)
+            price = (b + quote_coin_amount) / (a + base_coin_amount)
         return price, a, b, base_coin_amount, quote_coin_amount
 
 
@@ -202,6 +204,8 @@ def get_pools_crescent(network: str = 'crescent',
     _pools_crescent_df = pd.DataFrame(_pools_crescent_json['pools'])
 
     _pools_crescent_df['id'] = _pools_crescent_df['id'].astype(int)
+    _pools_crescent_df['min_price'] = _pools_crescent_df['min_price'].astype(float)
+    _pools_crescent_df['max_price'] = _pools_crescent_df['max_price'].astype(float)
     _pools_crescent_df['swap_fee'] = 0.0
     _pools_crescent_df.rename(columns={'type': 'type_id'}, inplace=True)
     _pools_crescent_df.loc[:, 'balances_crescent'] = _pools_crescent_df.loc[:, 'balances']
