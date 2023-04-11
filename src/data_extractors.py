@@ -282,7 +282,7 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
     """
     _coins_list = list(pools_df['reserve_coin_denoms'])
     if extra_coins is None:
-        extra_coins = ['uatom']
+        extra_coins = ['uatom', 'ujuno']
     _coins_unique_list = list(set(np.concatenate(_coins_list).flat)) + extra_coins
     _price_df = pd.DataFrame(columns=_coins_unique_list, index=_coins_unique_list)
 
