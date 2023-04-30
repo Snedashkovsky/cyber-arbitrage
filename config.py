@@ -85,6 +85,11 @@ COSMOSHUB_NODE_LCD_URL = 'https://lcd.cosmoshub-4.bronbro.io'
 COSMOSHUB_CHAIN_ID = 'cosmoshub-4'
 COSMOSHUB_LCD_CLIENT = LCDClient(chain_id=COSMOSHUB_CHAIN_ID, url=COSMOSHUB_NODE_LCD_URL, prefix='cosmos')
 
+JUNO_NODE_RPC_URL = 'https://rpc.juno-1.bronbro.io:443'
+JUNO_NODE_LCD_URL = 'https://lcd.juno-1.bronbro.io'
+JUNO_CHAIN_ID = 'juno-1'
+JUNO_LCD_CLIENT = LCDClient(chain_id=JUNO_CHAIN_ID, url=JUNO_NODE_LCD_URL, prefix='juno')
+
 # usual pool fee
 POOL_FEE = 0.003
 
