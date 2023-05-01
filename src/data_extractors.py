@@ -232,7 +232,7 @@ def get_pools_crescent(network: str = 'crescent',
 
 def get_pools(display_data: bool = False,
               recalculate_pools: bool = True,
-              networks=None,
+              networks: Optional[list[str]] = None,
               bostrom_related_osmo_pools: Optional[tuple] = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
     """
     Extract pools data from osmosis, bostrom and space-pussy network
@@ -270,8 +270,19 @@ def get_pools(display_data: bool = False,
     return _pools_df
 
 
+def get_pool_ids_by_denoms(denoms: list[str], pools_df: pd.DataFrame) -> list[int]:
+    """
+    Extract pool ids from pool data for 2 given denoms
+    :param denoms: list of 2 given denoms
+    :param pools_df: pool data dataframe
+    :return: list of pool ids
+    """
+    assert len(denoms) == 2
+    return pools_df[pools_df.reserve_coin_denoms.isin([denoms, denoms[::-1]])].id.to_list()
+
+
 def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: bool = False,
-               extra_coins: Optional[list] = None) -> pd.DataFrame:
+               extra_coins: Optional[list[str]] = None) -> pd.DataFrame:
     """
     Calculate direct prices from pools data
     :param pools_df: dataframe with pools data
