@@ -24,6 +24,13 @@
 ### Bostrom and Space-Pussy Swap Optimization
 [Finding the Best Way to Swap Coins](swap_optimization.ipynb)
 
+### Bostrom Revenue and Price Model
+[Bostrom Revenue and Price Model](revenue_model.ipynb)
+
+### Bostrom and Space-Pussy Deposit Calculation
+[Bostrom and Space-Pussy Deposit Calculation for direct transaction](deposit_calculation.ipynb)  
+it's usually more convenient to use the [cyb.ai](https://cyb.ai/warp/add-liquidity)
+
 ### Price Calculation
 #### Bostrom and Space-Pussy
 
