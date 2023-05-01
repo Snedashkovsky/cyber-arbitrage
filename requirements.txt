@@ -1,4 +1,3 @@
-json
 pandas
 numpy
 requests
