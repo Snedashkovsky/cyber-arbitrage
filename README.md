@@ -22,7 +22,8 @@
 
 #### [Bostrom and Space-Pussy Swap Optimization. Finding the Best Way to Swap Coins](swap_optimization.ipynb)
 
-#### [Bostrom and Space-Pussy Deposit Calculation for direct transaction](deposit_calculation.ipynb)  
+#### [Bostrom and Space-Pussy Deposit Calculation for a direct transaction](deposit_calculation.ipynb)  
+it's usually more convenient to use the [cyb.ai](https://cyb.ai/warp/add-liquidity)
 
 ### Price Formulas
 #### Bostrom and Space-Pussy
