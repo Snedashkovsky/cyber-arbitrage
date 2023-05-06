@@ -7,7 +7,8 @@ from pandarallel import pandarallel
 from itertools import permutations, combinations, chain
 from typing import Optional, Union
 
-from src.bash_utils import get_json_from_bash_query
+from cyberutils.bash import get_json_from_bash_query
+
 from src.swap_utils import get_pool_value_by_coin
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \

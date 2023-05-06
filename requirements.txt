@@ -7,3 +7,4 @@ cyber_sdk
 ipython
 pandarallel
 multiprocess
+cyberutils
