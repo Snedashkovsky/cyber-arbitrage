@@ -105,7 +105,8 @@ def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
     :param coin_denom: extracted coin denom
     :return: extracted coin balance
     """
-    coin_balance = [item['amount'] for item in balance_coins.to_data() if rename_denom(item['denom']) == coin_denom]
+    coin_balance = [item['amount'] for item in balance_coins.to_data() if
+                    rename_denom(item['denom']) == rename_denom(coin_denom)]
     return int(coin_balance[0]) if len(coin_balance) > 0 else 0
 
 
