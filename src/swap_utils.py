@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import Optional
+from typing import Optional, Union
 
 from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coins
@@ -33,9 +33,9 @@ def get_pool_value_by_coin(
 
 
 def get_balance(
-        address: str,
-        price_df: pd.DataFrame,
-        base_coin_denom: str = 'hydrogen',
+        address: Union[str, AccAddress],
+        price_df: Optional[pd.DataFrame] = None,
+        base_coin_denom: Optional[str] = 'hydrogen',
         display_exceptions: bool = False) -> [int, Coins]:
     """
     Extract address balance by coins and convert it to base denomination
@@ -62,22 +62,23 @@ def get_balance(
     _balance_all_coins = _lcd_client.bank.balance(address=AccAddress(address))[0]
 
     _balance_in_base_coin = 0
-    for _coin in _balance_all_coins.to_list():
-        _coin_denom = rename_denom(_coin.denom)
-        try:
-            _balance_in_base_coin += _coin.amount * price_df.loc[base_coin_denom, _coin_denom] \
-                if price_df.loc[base_coin_denom, _coin_denom] > 0 else 0
-        except KeyError:
-            if display_exceptions:
-                print(f'{_coin_denom} not found in price_df')
-            pass
+    if price_df is not None and base_coin_denom:
+        for _coin in _balance_all_coins.to_list():
+            _coin_denom = rename_denom(_coin.denom)
+            try:
+                _balance_in_base_coin += _coin.amount * price_df.loc[base_coin_denom, _coin_denom] \
+                    if price_df.loc[base_coin_denom, _coin_denom] > 0 else 0
+            except KeyError:
+                if display_exceptions:
+                    print(f'{_coin_denom} not found in price_df')
+                pass
     return int(_balance_in_base_coin) if not np.isnan(_balance_in_base_coin) else 0, _balance_all_coins
 
 
 def get_total_balance(
-        addresses: list[str],
-        price_df: pd.DataFrame,
-        base_coin_denom: str = 'hydrogen',
+        addresses: list[Union[str, AccAddress]],
+        price_df: Optional[pd.DataFrame] = None,
+        base_coin_denom: Optional[str] = 'hydrogen',
         display_exceptions: bool = False) -> [int, Coins]:
     """
     Extract addresses balance by coins and convert it to base denomination
@@ -87,15 +88,15 @@ def get_total_balance(
     :param display_exceptions: display or not exceptions about finding coin in price_df
     :return: total addresses balance converted to base denomination and total addresses balance by coins
     """
-    _initial_balance = 0
-    _initial_balance_all_coins = Coins()
+    _balance = 0
+    _balance_all_coins = Coins()
     for _address in addresses:
-        _initial_balance_item, _initial_balance_all_coins_item = get_balance(address=_address, price_df=price_df,
-                                                                             base_coin_denom=base_coin_denom,
-                                                                             display_exceptions=display_exceptions)
-        _initial_balance += _initial_balance_item
-        _initial_balance_all_coins = _initial_balance_all_coins + _initial_balance_all_coins_item
-    return _initial_balance, _initial_balance_all_coins
+        _balance_item, _balance_all_coins_item = get_balance(address=_address, price_df=price_df,
+                                                             base_coin_denom=base_coin_denom,
+                                                             display_exceptions=display_exceptions)
+        _balance += _balance_item
+        _balance_all_coins = _balance_all_coins + _balance_all_coins_item
+    return _balance, _balance_all_coins
 
 
 def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
@@ -105,8 +106,8 @@ def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
     :param coin_denom: extracted coin denom
     :return: extracted coin balance
     """
-    coin_balance = [item['amount'] for item in balance_coins.to_data() if
-                    rename_denom(item['denom']) == rename_denom(coin_denom)]
+    coin_balance = [item['amount'] for item in balance_coins.to_data()
+                    if rename_denom(item['denom']) == rename_denom(coin_denom)]
     return int(coin_balance[0]) if len(coin_balance) > 0 else 0
 
 
