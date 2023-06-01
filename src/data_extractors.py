@@ -179,7 +179,11 @@ def get_crescent_pool_params(row: pd.Series) -> [Optional[Union[float, int]]]:
             price = _price_min
         else:
             price = (b + quote_coin_amount) / (a + base_coin_amount)
-        return price, a, b, base_coin_amount, quote_coin_amount
+
+        balances_with_a_b = \
+            [{'denom': row.balances[0]['denom'], 'amount': int(row.balances[0]['amount']) + row.a},
+             {'denom': row.balances[1]['denom'], 'amount': int(row.balances[1]['amount']) + row.b}]
+        return price, a, b, balances_with_a_b, base_coin_amount, quote_coin_amount
 
 
 def get_pools_crescent(network: str = 'crescent',
@@ -222,7 +226,12 @@ def get_pools_crescent(network: str = 'crescent',
         _pools_crescent_df = _pools_crescent_df[~_pools_crescent_df.disabled]
 
     if enrich_data:
-        _pools_crescent_df.loc[:, ['calculated_price', 'a', 'b', 'base_coin_amount', 'quote_coin_amount']] = \
+        _pools_crescent_df.loc[:, ['calculated_price',
+                                   'a',
+                                   'b',
+                                   'balances_with_a_b',
+                                   'base_coin_amount',
+                                   'quote_coin_amount']] = \
             _pools_crescent_df.apply(lambda row: pd.Series(get_crescent_pool_params(row)), axis=1).to_numpy()
 
     if display_data:
@@ -304,7 +313,7 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
         _balances = \
             {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
                 item['amount'])
-             for item in _pool_row.balances}
+             for item in _pool_row['balances_with_a_b' if 'balances_with_a_b' in _pool_row.keys() else 'balances']}
         if _balances:
             for _coin_from, _coin_to in permutations(_coins_pair, 2):
                 _swap_fee = _pool_row.swap_fee if not zero_fee else 0
