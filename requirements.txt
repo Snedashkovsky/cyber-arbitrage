@@ -4,7 +4,7 @@ requests
 python-dotenv
 tqdm
 cyber_sdk
-ipython
+ipython>=8.13.2
 pandarallel
 multiprocess
 cyberutils
