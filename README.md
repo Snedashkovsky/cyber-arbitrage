@@ -1,4 +1,8 @@
 ## Arbitrage in Bostrom, Space-Pussy, Osmosis and Crescent Networks
+<p>
+    <img alt="GitHub" src="https://img.shields.io/github/license/Snedashkovsky/cyber-arbitrage">
+    <img alt="Python" src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue">
+</p>
 
 ### Pools
 
@@ -17,7 +21,7 @@
 
 [Tendermint Liquidity Module Light Paper](https://github.com/tendermint/liquidity/blob/develop/doc/LiquidityModuleLightPaper_EN.pdf)
 
-Formulas without orderbook matching (Liquidity Pool Model only)   
+formulas without orderbook matching (Liquidity Pool Model only)   
 
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{150}\bg{white}Price&space;=&space;\frac{Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;2\&space;*\&space;Source\&space;Coin\&space;Amount}" />
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{175}\bg{white}Target\&space;Coin\&space;Amount&space;=&space;\frac{Source\&space;Coin\&space;Amount\&space;*\&space;Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;2\&space;*\&space;Source\&space;Coin\&space;Amount}" />
@@ -34,7 +38,7 @@ where _Pool Fee = 0.003_ as most common value
 
 #### [Bostrom Revenue and Price Model](revenue_model.ipynb)
 
-#### [Bostrom and Space-Pussy Related Pools Liquidity](pools_liquidity_in_gh.ipynb)
+#### [Liquidity of Pools Related with Bostrom and Space-Pussy](pools_liquidity_in_gh.ipynb)
 
 #### [Search the Best Arbitrage in Bostrom, Osmosis and Space-Pussy Pools](search_arbitrage.ipynb)
 
@@ -57,4 +61,27 @@ price_df = get_prices(pools_df=pools_df)
 #### Enriched Prices
 ```python
 price_df = get_price_enriched(price_df=price_df, base_coin_denom='uosmo')
+```
+
+### How to start
+you should have [python](https://www.python.org/downloads/) version 3.9, 3.10 or 3.11, check it
+```bash
+python --version
+```
+clone repo
+```bash 
+git clone https://github.com/Snedashkovsky/cyber-arbitrage && \
+cd cyber-arbitrage
+```
+install [jupyter notebook](https://jupyter.org/install)
+```bash
+pip install notebook
+```
+install python requirements
+```bash
+pip install -r requirements.txt
+```
+run jupyter notebook
+```bash
+jupyter notebook
 ```

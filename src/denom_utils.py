@@ -19,4 +19,8 @@ def reverse_rename_denom(denom: str, denom_names_dict: dict = IBC_COIN_NAMES) ->
     :return: network name
     """
     denom_names_reverse_dict = {v: k for k, v in denom_names_dict.items()}
-    return denom_names_reverse_dict[denom] if denom in denom_names_reverse_dict.keys() else denom
+    if denom in denom_names_reverse_dict.keys():
+        return denom_names_reverse_dict[denom]
+    if denom[-7:] == '(pussy)':
+        return denom[:-7]
+    return denom
