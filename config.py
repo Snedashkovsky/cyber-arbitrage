@@ -69,13 +69,13 @@ PUSSY_LCD_CLIENT = LCDClient(chain_id=PUSSY_CHAIN_ID, url=PUSSY_NODE_LCD_URL, pr
 
 OSMOSIS_NODE_RPC_URL = 'https://rpc.osmosis-1.bronbro.io:443'
 OSMOSIS_NODE_LCD_URL = 'https://lcd.osmosis-1.bronbro.io'
-OSMOSIS_POOLS_API_URL = f'{OSMOSIS_NODE_LCD_URL}/osmosis/gamm/v1beta1/pools?pagination.limit=1000'  # 'https://lcd-osmosis.keplr.app/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
+OSMOSIS_POOLS_API_URL = f'{OSMOSIS_NODE_LCD_URL}/osmosis/gamm/v1beta1/pools?pagination.limit=1000'
 OSMOSIS_CHAIN_ID = 'osmosis-1'
 OSMOSIS_LCD_CLIENT = LCDClient(chain_id=OSMOSIS_CHAIN_ID, url=OSMOSIS_NODE_LCD_URL, prefix='osmo')
 OSMOSIS_BASH_PRECOMMAND = dotenv_values(".env")['BASH_PRECOMMAND']
 
-CRESCENT_NODE_RPC_URL = 'https://mainnet.crescent.network:26657'  # 'https://crescent-mainnet-rpc.autostake.net:443'
-CRESCENT_NODE_LCD_URL = 'https://mainnet.crescent.network:1317'  # 'https://crescent-mainnet-lcd.autostake.net'
+CRESCENT_NODE_RPC_URL = 'https://mainnet.crescent.network:26657'
+CRESCENT_NODE_LCD_URL = 'https://mainnet.crescent.network:1317'
 CRESCENT_POOLS_API_URL = f'{CRESCENT_NODE_LCD_URL}/crescent/liquidity/v1beta1/pools'
 CRESCENT_CHAIN_ID = 'crescent-1'
 CRESCENT_LCD_CLIENT = LCDClient(chain_id=CRESCENT_CHAIN_ID, url=CRESCENT_NODE_LCD_URL, prefix='cre')
@@ -86,8 +86,8 @@ COSMOSHUB_NODE_LCD_URL = 'https://lcd.cosmoshub-4.bronbro.io'
 COSMOSHUB_CHAIN_ID = 'cosmoshub-4'
 COSMOSHUB_LCD_CLIENT = LCDClient(chain_id=COSMOSHUB_CHAIN_ID, url=COSMOSHUB_NODE_LCD_URL, prefix='cosmos')
 
-JUNO_NODE_RPC_URL = 'https://rpc.juno-1.bronbro.io:443'
-JUNO_NODE_LCD_URL = 'https://lcd.juno-1.bronbro.io'
+JUNO_NODE_RPC_URL = 'https://rpc-juno.ecostake.com:443'
+JUNO_NODE_LCD_URL = 'https://rest-juno.ecostake.com'
 JUNO_CHAIN_ID = 'juno-1'
 JUNO_LCD_CLIENT = LCDClient(chain_id=JUNO_CHAIN_ID, url=JUNO_NODE_LCD_URL, prefix='juno')
 

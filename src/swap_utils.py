@@ -242,7 +242,7 @@ def swap_osmosis(
         tx_unsigned_file_name: str,
         tx_signed_file_name: str,
         max_slippage: float = 0.05,
-        gas_limit: int = 200_000,
+        gas_limit: int = 250_000,
         fee_denom: str = 'uosmo') -> str:
     """
     Swap in the gamm module of Osmosis
@@ -309,8 +309,10 @@ def swap_osmosis(
         shell=True
     )
     _res_json = get_json_from_bash_query(
-        bash_command=f'osmosisd tx broadcast {tx_signed_file_name} --output json '
+        bash_command=f'osmosisd tx broadcast {tx_signed_file_name} --output json --broadcast-mode=block '
                      f'--chain-id {OSMOSIS_CHAIN_ID} --node {OSMOSIS_NODE_RPC_URL}'
     )
-
+    # print the tx to the console, if there is an error
+    if 'raw_log' not in _res_json.keys() or _res_json['raw_log'][0] != '[':
+        print(_res_json)
     return _res_json["txhash"]
