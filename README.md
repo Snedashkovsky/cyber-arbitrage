@@ -23,7 +23,15 @@
 
 formulas without orderbook matching (Liquidity Pool Model only)   
 
+```math
+Price = \frac{Target Coin Pool Amount \times (1 - Pool Fee)}{Source Coin Pool Amount + 2 \times Source Coin Amount}
+```
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{150}\bg{white}Price&space;=&space;\frac{Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;2\&space;*\&space;Source\&space;Coin\&space;Amount}" />
+
+```math
+Target Coin Amount = \frac{Source Coin Amount \times Target Coin Pool Amount \times (1 - Pool Fee)}{Source Coin Pool Amount + 2 \times Source Coin Amount}
+```
+
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{175}\bg{white}Target\&space;Coin\&space;Amount&space;=&space;\frac{Source\&space;Coin\&space;Amount\&space;*\&space;Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;2\&space;*\&space;Source\&space;Coin\&space;Amount}" />
 
 where _Pool Fee = 0.003_ as most common value
@@ -31,7 +39,16 @@ where _Pool Fee = 0.003_ as most common value
 #### Osmosis
 [Module Gamm documentation](https://docs.osmosis.zone/osmosis-core/modules/gamm)
 
+```math
+Price = \frac{Target Coin Pool Amount \times (1 - Pool Fee)}{Source Coin Pool Amount + (1 - Pool Fee) \times Source Coin Amount} \times \frac{Source Coin Pool Weight}{Target Coin Pool Weight}
+```
+
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{200}\bg{white}Price&space;=&space;\frac{Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;(1&space;-&space;Pool\&space;Fee)\&space;*\&space;Source\&space;Coin\&space;Amount}\&space;*\&space;\frac{Source\&space;Coin\&space;Pool\&space;Weight}{Target\&space;Coin\&space;Pool\&space;Weight}" />
+
+```math
+Target Coin Amount = \frac{Source Coin Amount \times Target Coin Pool Amount \times (1 - Pool Fee)}{Source Coin Pool Amount + (1 - Pool Fee) \times Source Coin Amount} \times \frac{Source Coin Pool Weight}{Target Coin Pool Weight}
+```
+
 <img src="https://latex.codecogs.com/png.image?\inline\dpi{175}\bg{white}Target\&space;Coin\&space;Amount&space;=&space;\frac{Source\&space;Coin\&space;Amount\&space;*\&space;Target\&space;Coin\&space;Pool\&space;Amount\&space;*\&space;(1&space;-&space;Pool\&space;Fee)}{Source\&space;Coin\&space;Pool\&space;Amount\&space;&plus;\&space;(1&space;-&space;Pool\&space;Fee)\&space;*\&space;Source\&space;Coin\&space;Amount}\&space;*\&space;\frac{Source\&space;Coin\&space;Pool\&space;Weight}{Target\&space;Coin\&space;Pool\&space;Weight}" />
 
 ### Analytics
