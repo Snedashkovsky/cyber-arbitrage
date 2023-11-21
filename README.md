@@ -1,12 +1,13 @@
 ## Arbitrage in Bostrom, Space-Pussy, Osmosis and Crescent Networks
 <p>
     <img alt="GitHub" src="https://img.shields.io/github/license/Snedashkovsky/cyber-arbitrage">
-    <img alt="Python" src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11-blue">
+    <img alt="Python" src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue">
 </p>
 
 ### Pools
 
 #### [Bostrom Pools](https://cyb.ai/warp)  
+TVL on [DefiLlama](https://defillama.com/chain/Bostrom)
 #### [Space-Pussy Pools](https://cyb.ai/warp)  
 #### [Osmosis Pools](https://frontier.osmosis.zone/pools)
 - [BOOT-ATOM](https://info.osmosis.zone/pool/596)  
