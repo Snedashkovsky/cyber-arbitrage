@@ -3,11 +3,14 @@ import numpy as np
 import json
 from typing import Optional, Union
 from math import ceil
+import traceback
+from logging import Logger
 
 from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coin, Coins
+from cyber_sdk.exceptions import LCDResponseError
 from cyber_sdk.core.liquidity import MsgSwapWithinBatch
-from cyberutils.bash import execute_bash, get_json_from_bash_query
+from cyberutils.bash import execute_bash, get_json_from_bash_query, display_sleep
 
 from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT, \
@@ -103,6 +106,73 @@ def get_total_balance(
         _balance += _balance_item
         _balance_all_coins = _balance_all_coins + _balance_all_coins_item
     return _balance, _balance_all_coins
+
+
+def balance_to_str(balance: int, balance_all_coins: Coins, base_coin_denom: str, note: str = '') -> str:
+    """
+    Convert balance to string
+    :param balance: total balance in base coin denom
+    :param balance_all_coins: balance by tokens
+    :param base_coin_denom: base coin denom
+    :param note: postfix after `balance` word
+    :return: balance in string
+    """
+    return f'\tbalance {note}  {balance:>,} {base_coin_denom}\t\t' + '    '.join(
+        f'{coin.amount:>,} {rename_denom(coin.denom)}'
+        for coin in balance_all_coins.to_list()
+        if coin.amount != 0)
+
+
+def display_balance(
+        wallet_addresses: list[str],
+        price_enriched_df: pd.DataFrame,
+        base_coin_denom: str,
+        logging: Logger,
+        delay_time: int = 30):
+    """
+    Decorator to display balance changes
+    :param wallet_addresses: list of addresses
+    :param price_enriched_df: dataframe with enriched price data
+    :param base_coin_denom: base coin denom
+    :param logging: actual logging
+    :param delay_time: delay time in seconds
+    :return: decorator
+    """
+    def actual_decorator(func):
+        def wrapper(*args, **kwargs):
+            initial_balance, initial_balance_all_coins = get_total_balance(
+                addresses=wallet_addresses,
+                price_df=price_enriched_df,
+                base_coin_denom=base_coin_denom)
+            try:
+                return_value = func(*args, **kwargs)
+            except LCDResponseError as e:
+                logging.error(f'LCDResponseError occurred while executing function {func.__name__}: {str(e)}')
+                logging.error(traceback.format_exc())
+            display_sleep(delay_time=delay_time)
+
+            final_balance, final_balance_all_coins = get_total_balance(
+                addresses=wallet_addresses,
+                price_df=price_enriched_df,
+                base_coin_denom=base_coin_denom)
+
+            logging.info(
+                balance_to_str(
+                    balance=final_balance - initial_balance,
+                    balance_all_coins=final_balance_all_coins - initial_balance_all_coins,
+                    base_coin_denom=base_coin_denom,
+                    note='change'))
+            logging.info(
+                balance_to_str(
+                    balance=final_balance,
+                    balance_all_coins=final_balance_all_coins,
+                    base_coin_denom=base_coin_denom,
+                    note='final'))
+            return return_value
+
+        return wrapper
+
+    return actual_decorator
 
 
 def get_balance_for_coin(balance_coins: Coins, coin_denom: str) -> int:
