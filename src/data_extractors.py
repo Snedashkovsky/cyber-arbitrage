@@ -5,7 +5,7 @@ from math import isnan, sqrt
 from IPython.display import display, HTML
 from pandarallel import pandarallel
 from itertools import permutations, combinations, chain
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 
 from cyberutils.bash import get_json_from_bash_query
 
@@ -16,7 +16,7 @@ from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS
     CRESCENT_POOLS_API_URL, POOL_FEE
 
 
-def get_pools_cyber(network: str = 'bostrom',
+def get_pools_cyber(network: Literal['bostrom', 'space-pussy'] = 'bostrom',
                     display_data: bool = False,
                     recalculate_pools: bool = True,
                     pools_bash_query: Optional[str] = None,
@@ -70,7 +70,7 @@ def get_pools_cyber(network: str = 'bostrom',
     return _pools_cyber_df
 
 
-def get_pools_osmosis(network: str = 'osmosis',
+def get_pools_osmosis(network: Literal['osmosis'] = 'osmosis',
                       display_data: bool = False,
                       recalculate_pools: bool = True,
                       pools_api_url: str = OSMOSIS_POOLS_API_URL,
@@ -186,7 +186,7 @@ def get_crescent_pool_params(row: pd.Series) -> [Optional[Union[float, int]]]:
         return price, a, b, balances_with_a_b, base_coin_amount, quote_coin_amount
 
 
-def get_pools_crescent(network: str = 'crescent',
+def get_pools_crescent(network: Literal['crescent'] = 'crescent',
                        display_data: bool = False,
                        recalculate_pools: bool = True,
                        remove_disabled_pools: bool = True,
@@ -242,17 +242,16 @@ def get_pools_crescent(network: str = 'crescent',
 
 def get_pools(display_data: bool = False,
               recalculate_pools: bool = True,
-              networks: Optional[list[str]] = None,
+              networks: Optional[list[Literal['bostrom', 'space-pussy', 'osmosis', 'crescent']]] = None,
               bostrom_related_osmo_pools: Optional[tuple] = BOSTROM_RELATED_OSMO_POOLS) -> pd.DataFrame:
     """
-    Extract pools data from osmosis, bostrom and space-pussy network
+    Extract pools data from osmosis, bostrom, space-pussy, and crescent network
     :param display_data: display or not pool data
     :param recalculate_pools: update or not pool list
-    :param networks: a list of `bostrom`, `space-pussy` or `osmosis` networks, all of them are extracted by default
+    :param networks: a list of networks, `bostrom`, `space-pussy` or `osmosis` are extracted by default
     :param bostrom_related_osmo_pools: tuple of bostrom related pool ids in osmosis network or None for all pools
     :return: dataframe with pools data
     """
-
     networks = networks if networks else ['bostrom', 'space-pussy', 'osmosis']
 
     _pools_df = pd.DataFrame(columns=['network', 'id', 'type_id', 'balances', 'reserve_coin_denoms', 'swap_fee'])
@@ -391,13 +390,13 @@ def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen'
 
 
 def get_pools_and_prices(networks: Optional[list[str]],
-                         pools_isin: Optional[dict[str, list]],
-                         pools_notisin: Optional[dict[str, list]]) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                         pools_isin: Optional[dict[str, list]] = None,
+                         pools_not_isin: Optional[dict[str, list]] = None) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Get pool, direct price, and enriched price data
     :param networks: a list of `bostrom`, `space-pussy` or `osmosis` networks, all of them are extracted by default
     :param pools_isin: dictionary with pools which must be in result
-    :param pools_notisin: dictionary with pools which must not be in result
+    :param pools_not_isin: dictionary with pools which must not be in result
     :return: pool, direct price, and enriched price dataframes
     """
     _pools_df = get_pools(networks=networks)
@@ -407,10 +406,10 @@ def get_pools_and_prices(networks: Optional[list[str]],
                 lambda row: True if row['network'] in pools_isin.keys() and row.id in pools_isin[
                     row['network']] else False,
                 axis=1)]
-    if pools_notisin:
+    if pools_not_isin:
         _pools_df = _pools_df[
             _pools_df.apply(
-                lambda row: True if row['network'] in pools_notisin.keys() and row.id not in pools_notisin[
+                lambda row: True if row['network'] in pools_not_isin.keys() and row.id not in pools_not_isin[
                     row['network']] else False,
                 axis=1)]
     _price_df = get_prices(pools_df=_pools_df)
