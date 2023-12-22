@@ -53,16 +53,17 @@ def get_balance(
     :param display_exceptions: display or not exceptions about finding coin in price_df
     :return: address balance converted to base denomination and address balance by coins
     """
-    assert address[:4] in ('osmo', 'puss', 'bost', 'cosm', 'cre1', 'juno')
-    if address[:4] == 'osmo':
+    _prefix = str(address)[:4]
+    assert _prefix in ('osmo', 'puss', 'bost', 'cosm', 'cre1', 'juno')
+    if _prefix == 'osmo':
         _lcd_client = OSMOSIS_LCD_CLIENT
-    elif address[:4] == 'puss':
+    elif _prefix == 'puss':
         _lcd_client = PUSSY_LCD_CLIENT
-    elif address[:4] == 'cosm':
+    elif _prefix == 'cosm':
         _lcd_client = COSMOSHUB_LCD_CLIENT
-    elif address[:3] == 'cre':
+    elif _prefix == 'cre1':
         _lcd_client = CRESCENT_LCD_CLIENT
-    elif address[:4] == 'juno':
+    elif _prefix == 'juno':
         _lcd_client = JUNO_LCD_CLIENT
     else:
         _lcd_client = BOSTROM_LCD_CLIENT
@@ -379,10 +380,13 @@ def swap_osmosis(
         shell=True
     )
     _res_json = get_json_from_bash_query(
-        bash_command=f'osmosisd tx broadcast {tx_signed_file_name} --output json --broadcast-mode=block '
+        bash_command=f'osmosisd tx broadcast {tx_signed_file_name} --output json '
                      f'--chain-id {OSMOSIS_CHAIN_ID} --node {OSMOSIS_NODE_RPC_URL}'
     )
     # print the tx to the console, if there is an error
+    if _res_json is None or 'txhash' not in _res_json.keys():
+        print(_res_json)
+        return None
     if 'raw_log' not in _res_json.keys() or _res_json['raw_log'][0] != '[':
         print(_res_json)
     return _res_json["txhash"]
