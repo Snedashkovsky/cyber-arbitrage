@@ -5,17 +5,18 @@ from typing import Optional, Union
 from math import ceil
 import traceback
 from logging import Logger
+import requests
 
 from cyber_sdk.core.bech32 import AccAddress
 from cyber_sdk.core.coins import Coin, Coins
-from cyber_sdk.exceptions import LCDResponseError
 from cyber_sdk.core.liquidity import MsgSwapWithinBatch
+from cyber_sdk.exceptions import LCDResponseError
 from cyberutils.bash import execute_bash, get_json_from_bash_query, display_sleep
 
 from src.denom_utils import rename_denom, reverse_rename_denom
-from config import BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT, \
-    OSMOSIS_NODE_RPC_URL, OSMOSIS_CHAIN_ID, PUSSY_LCD_CLIENT, COSMOSHUB_LCD_CLIENT, CRESCENT_LCD_CLIENT, \
-    JUNO_LCD_CLIENT, CLI_WALLET, OSMOSIS_BASH_PRECOMMAND
+from config import (BOSTROM_CHAIN_ID, BOSTROM_NODE_RPC_URL, POOL_FEE, BOSTROM_LCD_CLIENT, OSMOSIS_LCD_CLIENT,
+                    OSMOSIS_NODE_RPC_URL, OSMOSIS_NODE_LCD_URL, OSMOSIS_CHAIN_ID, PUSSY_LCD_CLIENT,
+                    COSMOSHUB_LCD_CLIENT, CRESCENT_LCD_CLIENT, JUNO_LCD_CLIENT, CLI_WALLET, OSMOSIS_BASH_PRECOMMAND)
 
 
 def get_pool_value_by_coin(
@@ -139,6 +140,7 @@ def display_balance(
     :param delay_time: delay time in seconds
     :return: decorator
     """
+
     def actual_decorator(func):
         def wrapper(*args, **kwargs):
             initial_balance, initial_balance_all_coins = get_total_balance(
@@ -302,6 +304,17 @@ def generate_swap_cyber_msg(
     )
 
 
+def get_osmosis_fee_price(node_lcd_url: str = OSMOSIS_NODE_LCD_URL, min_fee: float = 0.01) -> float:
+    """
+    Get osmosis fee price taking into account base and minimum fees
+    :param node_lcd_url: LCD node URL
+    :param min_fee: minimum fee set by a node
+    :return: osmosis fee price in uosmo
+    """
+    base_fee = float(requests.get(node_lcd_url + '/osmosis/txfees/v1beta1/cur_eip_base_fee').json()['base_fee'])
+    return max(base_fee, min_fee)
+
+
 def swap_osmosis(
         coin_from_amount: int,
         coin_from_denom: str,
@@ -309,12 +322,12 @@ def swap_osmosis(
         pools_df: pd.DataFrame,
         price_df: pd.DataFrame,
         osmosis_wallet_address: str,
-        fee_amount: int,
         tx_unsigned_file_name: str,
         tx_signed_file_name: str,
+        fee_amount: Optional[int] = None,
         max_slippage: float = 0.05,
         gas_limit: int = 250_000,
-        fee_denom: str = 'uosmo') -> str:
+        fee_denom: str = 'uosmo') -> Optional[str]:
     """
     Swap in the gamm module of Osmosis
     :param coin_from_amount: initial coin amount
@@ -331,6 +344,8 @@ def swap_osmosis(
     :param fee_denom: fee denom
     :return: transaction hash
     """
+    assert fee_amount is not None or fee_denom == 'uosmo'
+
     _coins_pool_df = pools_df.loc[
         pools_df.apply(
             lambda x: coin_from_denom in x.reserve_coin_denoms and coin_to_denom in x.reserve_coin_denoms,
@@ -351,6 +366,7 @@ def swap_osmosis(
          "token_out_min_amount": str(
              int(coin_from_amount * price_df.loc[coin_to_denom, coin_from_denom] * (1 - max_slippage)))}
     ]
+    fee_amount = fee_amount if fee_amount else int(get_osmosis_fee_price() * gas_limit * 1.5)
     _tx_unsigned = {
         "body":
             {"messages": _msgs,
