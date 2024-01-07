@@ -40,6 +40,8 @@ IBC_COIN_NAMES = \
 # coins in different chains
 COINS_IN_DIFFERENT_CHAINS = \
     [['boot', 'boot in osmosis'],
+     ['hydrogen', 'hydrogen in osmosis'],
+     ['tocyb', 'tocyb in osmosis'],
      ['uosmo', 'uosmo in bostrom'],
      ['uatom', 'uatom in osmosis', 'uatom in bostrom'],
      ['udsm', 'udsm in osmosis', 'udsm in bostrom'],
@@ -51,6 +53,8 @@ COINS_IN_DIFFERENT_CHAINS = \
 # coins direct transferred by IBC
 INTERCHANGEABLE_IBC_COINS = \
     [['boot', 'boot in osmosis'],
+     ['hydrogen', 'hydrogen in osmosis'],
+     ['tocyb', 'tocyb in osmosis'],
      ['uosmo', 'uosmo in bostrom'],
      ['uatom', 'uatom in osmosis'],
      ['uatom', 'uatom in bostrom'],
@@ -63,7 +67,8 @@ INTERCHANGEABLE_IBC_COINS = \
      ['pussy', 'pussy in bostrom'],
      ['liquidpussy', 'liquidpussy in bostrom']]
 
-BOSTROM_RELATED_OSMO_POOLS = (1, 497, 498, 596, 597, 619, 634, 704, 911, 912, 919)
+BOSTROM_RELATED_OSMO_POOLS = (1, 497, 498, 596, 597, 619, 640, 646, 634, 704, 745, 746, 750,
+                              911, 912, 919, 991, 1306, 1307, 1308, 1309, 1310, 1326, 1328, 1330)
 
 BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'
 BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.cybernode.ai/'
