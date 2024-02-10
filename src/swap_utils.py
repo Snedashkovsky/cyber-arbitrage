@@ -43,13 +43,13 @@ def get_pool_value_by_coin(
 
 def get_balance(
         address: Union[str, AccAddress],
-        price_df: Optional[pd.DataFrame] = None,
+        price_enriched_df: Optional[pd.DataFrame] = None,
         base_coin_denom: Optional[str] = 'hydrogen',
         display_exceptions: bool = False) -> [int, Coins]:
     """
     Extract address balance by coins and convert it to base denomination
     :param address: address
-    :param price_df: dataframe with price data
+    :param price_enriched_df: dataframe with enriched price data
     :param base_coin_denom: a base denom
     :param display_exceptions: display or not exceptions about finding coin in price_df
     :return: address balance converted to base denomination and address balance by coins
@@ -72,12 +72,12 @@ def get_balance(
     _balance_all_coins = _lcd_client.bank.balance(address=AccAddress(address))[0]
 
     _balance_in_base_coin = 0
-    if price_df is not None and base_coin_denom:
+    if price_enriched_df is not None and base_coin_denom:
         for _coin in _balance_all_coins.to_list():
             _coin_denom = rename_denom(_coin.denom)
             try:
-                _balance_in_base_coin += _coin.amount * price_df.loc[base_coin_denom, _coin_denom] \
-                    if price_df.loc[base_coin_denom, _coin_denom] > 0 else 0
+                _balance_in_base_coin += _coin.amount * price_enriched_df.loc[base_coin_denom, _coin_denom] \
+                    if price_enriched_df.loc[base_coin_denom, _coin_denom] > 0 else 0
             except KeyError:
                 if display_exceptions:
                     print(f'{_coin_denom} not found in price_df')
@@ -87,13 +87,13 @@ def get_balance(
 
 def get_total_balance(
         addresses: list[Union[str, AccAddress]],
-        price_df: Optional[pd.DataFrame] = None,
+        price_enriched_df: Optional[pd.DataFrame] = None,
         base_coin_denom: Optional[str] = 'hydrogen',
         display_exceptions: bool = False) -> [int, Coins]:
     """
     Extract addresses balance by coins and convert it to base denomination
     :param addresses: list of addresses
-    :param price_df: dataframe with price data
+    :param price_enriched_df: dataframe with enriched price data
     :param base_coin_denom: a base denom
     :param display_exceptions: display or not exceptions about finding coin in price_df
     :return: total addresses balance converted to base denomination and total addresses balance by coins
@@ -102,7 +102,7 @@ def get_total_balance(
     _balance_all_coins = Coins()
     for _address in addresses:
         _balance_item, _balance_all_coins_item = get_balance(address=_address,
-                                                             price_df=price_df,
+                                                             price_enriched_df=price_enriched_df,
                                                              base_coin_denom=base_coin_denom,
                                                              display_exceptions=display_exceptions)
         _balance += _balance_item
@@ -145,7 +145,7 @@ def display_balance(
         def wrapper(*args, **kwargs):
             initial_balance, initial_balance_all_coins = get_total_balance(
                 addresses=wallet_addresses,
-                price_df=price_enriched_df,
+                price_enriched_df=price_enriched_df,
                 base_coin_denom=base_coin_denom)
             try:
                 return_value = func(*args, **kwargs)
@@ -156,7 +156,7 @@ def display_balance(
 
             final_balance, final_balance_all_coins = get_total_balance(
                 addresses=wallet_addresses,
-                price_df=price_enriched_df,
+                price_enriched_df=price_enriched_df,
                 base_coin_denom=base_coin_denom)
 
             logging.info(
