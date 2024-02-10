@@ -1,19 +1,19 @@
-import requests
-import pandas as pd
-import numpy as np
-from math import isnan, sqrt
-from IPython.display import display, HTML
-from pandarallel import pandarallel
 from itertools import permutations, combinations, chain
+from math import isnan, sqrt
 from typing import Optional, Union, Literal
 
+import numpy as np
+import pandas as pd
+import requests
+from IPython.display import display, HTML
 from cyberutils.bash import get_json_from_bash_query
+from pandarallel import pandarallel
 
-from src.swap_utils import get_pool_value_by_coin
-from src.denom_utils import rename_denom, reverse_rename_denom
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
     PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, INTERCHANGEABLE_IBC_COINS, COINS_IN_DIFFERENT_CHAINS, \
     CRESCENT_POOLS_API_URL, POOL_FEE
+from src.denom_utils import rename_denom, reverse_rename_denom
+from src.swap_utils import get_pool_value_by_coin
 
 
 def get_pools_cyber(network: Literal['bostrom', 'space-pussy'] = 'bostrom',
@@ -389,16 +389,35 @@ def get_price_enriched(price_df: pd.DataFrame, base_coin_denom: str = 'hydrogen'
     return _price_enriched_df
 
 
+def get_pool_liquidity(balances: list,
+                       price_enriched_df: pd.DataFrame,
+                       target_denom: str = 'hydrogen') -> float:
+    if not balances:
+        return 0
+    denoms = [item['denom'] for item in balances]
+    balances_dict = {item['denom']: int(item['amount']) for item in balances}
+    if target_denom in denoms:
+        return balances_dict[target_denom] * 2
+    if not isnan(price_enriched_df.loc[target_denom, denoms[0]]):
+        return balances_dict[denoms[0]] * price_enriched_df.loc[target_denom, denoms[0]] * 2
+    if not isnan(price_enriched_df.loc[target_denom, denoms[1]]):
+        return balances_dict[denoms[1]] * price_enriched_df.loc[target_denom, denoms[1]] * 2
+    return 0
+
+
 def get_pools_and_prices(networks: Optional[list[str]],
                          pools_isin: Optional[dict[str, list]] = None,
-                         pools_not_isin: Optional[dict[str, list]] = None) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                         pools_not_isin: Optional[dict[str, list]] = None,
+                         target_denom: str = 'hydrogen') -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Get pool, direct price, and enriched price data
     :param networks: a list of `bostrom`, `space-pussy` or `osmosis` networks, all of them are extracted by default
     :param pools_isin: dictionary with pools which must be in result
     :param pools_not_isin: dictionary with pools which must not be in result
+    :param target_denom: target denom for pool liquidity calculation
     :return: pool, direct price, and enriched price dataframes
     """
+
     _pools_df = get_pools(networks=networks)
     if pools_isin:
         _pools_df = _pools_df[
@@ -409,9 +428,13 @@ def get_pools_and_prices(networks: Optional[list[str]],
     if pools_not_isin:
         _pools_df = _pools_df[
             _pools_df.apply(
-                lambda row: True if row['network'] in pools_not_isin.keys() and row.id not in pools_not_isin[
+                lambda row: True if row['network'] not in pools_not_isin.keys() or row.id not in pools_not_isin[
                     row['network']] else False,
                 axis=1)]
     _price_df = get_prices(pools_df=_pools_df)
-    _price_enriched_df = get_price_enriched(price_df=_price_df)
+    _price_enriched_df = get_price_enriched(price_df=_price_df, base_coin_denom=target_denom)
+    _pools_df['liquidity, ' + target_denom] = (
+        _pools_df['balances'].map(
+            lambda _balance: get_pool_liquidity(balances=_balance, target_denom=target_denom,
+                                                price_enriched_df=_price_enriched_df)))
     return _pools_df, _price_df, _price_enriched_df
