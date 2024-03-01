@@ -408,13 +408,15 @@ def get_pool_liquidity(balances: list,
 def get_pools_and_prices(networks: Optional[list[str]],
                          pools_isin: Optional[dict[str, list]] = None,
                          pools_not_isin: Optional[dict[str, list]] = None,
-                         target_denom: str = 'hydrogen') -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+                         target_denom: str = 'hydrogen',
+                         zero_fee: bool = False) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Get pool, direct price, and enriched price data
     :param networks: a list of `bostrom`, `space-pussy` or `osmosis` networks, all of them are extracted by default
     :param pools_isin: dictionary with pools which must be in result
     :param pools_not_isin: dictionary with pools which must not be in result
     :param target_denom: target denom for pool liquidity calculation
+    :param zero_fee: calculations without|with pool fees
     :return: pool, direct price, and enriched price dataframes
     """
 
@@ -431,7 +433,7 @@ def get_pools_and_prices(networks: Optional[list[str]],
                 lambda row: True if row['network'] not in pools_not_isin.keys() or row.id not in pools_not_isin[
                     row['network']] else False,
                 axis=1)]
-    _price_df = get_prices(pools_df=_pools_df)
+    _price_df = get_prices(pools_df=_pools_df, zero_fee=zero_fee)
     _price_enriched_df = get_price_enriched(price_df=_price_df, base_coin_denom=target_denom)
     _pools_df['liquidity, ' + target_denom] = (
         _pools_df['balances'].map(
