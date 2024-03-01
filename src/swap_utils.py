@@ -110,19 +110,23 @@ def get_total_balance(
     return _balance, _balance_all_coins
 
 
-def balance_to_str(balance: int, balance_all_coins: Coins, base_coin_denom: str, note: str = '') -> str:
+def balance_to_str(balance: int, balance_all_coins: Coins, base_coin_denom: str,
+                   ignore_assets: Optional[list[str]] = None, note: str = '') -> str:
     """
     Convert balance to string
     :param balance: total balance in base coin denom
     :param balance_all_coins: balance by tokens
     :param base_coin_denom: base coin denom
+    :param ignore_assets: list of assets to ignore from displaying balance
     :param note: postfix after `balance` word
     :return: balance in string
     """
+    if ignore_assets is None:
+        ignore_assets = []
     return f'\tbalance {note}  {balance:>,} {base_coin_denom}\t\t' + '    '.join(
         f'{coin.amount:>,} {rename_denom(coin.denom)}'
         for coin in balance_all_coins.to_list()
-        if coin.amount != 0)
+        if coin.amount != 0 and coin.denom not in ignore_assets)
 
 
 def display_balance(
@@ -130,6 +134,7 @@ def display_balance(
         price_enriched_df: pd.DataFrame,
         base_coin_denom: str,
         logging: Logger,
+        ignore_assets: Optional[list[str]] = None,
         delay_time: int = 30):
     """
     Decorator to display balance changes
@@ -137,6 +142,7 @@ def display_balance(
     :param price_enriched_df: dataframe with enriched price data
     :param base_coin_denom: base coin denom
     :param logging: actual logging
+    :param ignore_assets: list of assets to ignore from displaying balance
     :param delay_time: delay time in seconds
     :return: decorator
     """
@@ -152,13 +158,15 @@ def display_balance(
             except LCDResponseError as e:
                 logging.error(f'LCDResponseError occurred while executing function {func.__name__}: {str(e)}')
                 logging.error(traceback.format_exc())
+                return_value = None
             display_sleep(delay_time=delay_time)
 
             final_balance, final_balance_all_coins = get_total_balance(
                 addresses=wallet_addresses,
                 price_enriched_df=price_enriched_df,
                 base_coin_denom=base_coin_denom)
-
+            if final_balance - initial_balance == 0:
+                logging.error(return_value)
             logging.info(
                 balance_to_str(
                     balance=final_balance - initial_balance,
@@ -170,6 +178,7 @@ def display_balance(
                     balance=final_balance,
                     balance_all_coins=final_balance_all_coins,
                     base_coin_denom=base_coin_denom,
+                    ignore_assets=ignore_assets,
                     note='final'))
             return return_value
 
