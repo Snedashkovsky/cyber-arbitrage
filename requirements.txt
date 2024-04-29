@@ -8,4 +8,4 @@ cyber_sdk
 ipython>=8.13.2
 pandarallel
 multiprocess
-cyberutils
+cyberutils>=0.0.6

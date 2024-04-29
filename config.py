@@ -73,6 +73,7 @@ BOSTROM_RELATED_OSMO_POOLS = (1, 497, 498, 596, 597, 619, 640, 646, 634, 704, 74
 BOSTROM_NODE_RPC_URL = 'https://rpc.bostrom.cybernode.ai:443'  # 'https://rpc.bostrom.bronbro.io:443'
 BOSTROM_NODE_LCD_URL = 'https://lcd.bostrom.cybernode.ai/'
 BOSTROM_POOLS_BASH_QUERY = f'cyber query liquidity pools --node {BOSTROM_NODE_RPC_URL} -o json'
+BOSTROM_OCR_CONTRACT = 'bostrom1w33tanvadg6fw04suylew9akcagcwngmkvns476wwu40fpq36pms92re6u'
 BOSTROM_CHAIN_ID = 'bostrom'
 BOSTROM_LCD_CLIENT = LCDClient(chain_id=BOSTROM_CHAIN_ID, url=BOSTROM_NODE_LCD_URL)
 

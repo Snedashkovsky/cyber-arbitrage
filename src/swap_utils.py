@@ -80,7 +80,7 @@ def get_balance(
                     if price_enriched_df.loc[base_coin_denom, _coin_denom] > 0 else 0
             except KeyError:
                 if display_exceptions:
-                    print(f'{_coin_denom} not found in price_df')
+                    print(f'Warning. {_coin_denom} not found in price_df')
                 pass
     return int(_balance_in_base_coin) if not np.isnan(_balance_in_base_coin) else 0, _balance_all_coins
 
@@ -412,6 +412,6 @@ def swap_osmosis(
     if _res_json is None or 'txhash' not in _res_json.keys():
         print(_res_json)
         return None
-    if 'raw_log' not in _res_json.keys() or _res_json['raw_log'][0] != '[':
+    if 'raw_log' not in _res_json.keys() or (_res_json['raw_log'] and _res_json['raw_log'][0] != '['):
         print(_res_json)
     return _res_json["txhash"]
