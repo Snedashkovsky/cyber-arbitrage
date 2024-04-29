@@ -12,7 +12,7 @@ from pandarallel import pandarallel
 from config import BOSTROM_RELATED_OSMO_POOLS, BOSTROM_POOLS_BASH_QUERY, OSMOSIS_POOLS_API_URL, BOSTROM_NODE_RPC_URL, \
     PUSSY_POOLS_BASH_QUERY, PUSSY_NODE_RPC_URL, INTERCHANGEABLE_IBC_COINS, COINS_IN_DIFFERENT_CHAINS, \
     CRESCENT_POOLS_API_URL, POOL_FEE
-from src.denom_utils import rename_denom, reverse_rename_denom
+from src.denom_utils import rename_denom, reverse_rename_denom, get_readable_asset_denom
 from src.swap_utils import get_pool_value_by_coin
 
 
@@ -52,16 +52,21 @@ def get_pools_cyber(network: Literal['bostrom', 'space-pussy'] = 'bostrom',
                 f'cyber query bank balances {address} --node {BOSTROM_NODE_RPC_URL} -o json' if network == 'bostrom'
                 else f'pussy query bank balances {address} --node {PUSSY_NODE_RPC_URL} -o json')['balances'])
     _pools_cyber_df.loc[:, 'balances'] = \
-        _pools_cyber_df['balances'].map(lambda x: [
-            {'denom': item['denom'] + '(pussy)' if item['denom'] in (
-                'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(item['denom']),
-             'amount': item['amount']}
-            for item in x])
+        _pools_cyber_df['balances'].map(
+            lambda x: [
+                {'denom': item['denom'] + '(pussy)' if item['denom'] in (
+                    'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(item['denom']),
+                 'amount': item['amount']}
+                for item in x
+            ]
+        )
     _pools_cyber_df.loc[:, 'reserve_coin_denoms'] = \
         _pools_cyber_df.reserve_coin_denoms.map(
-            lambda x: [_coin_denom + '(pussy)' if _coin_denom in (
-                'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(_coin_denom)
-                       for _coin_denom in x])
+            lambda x: [
+                _coin_denom + '(pussy)' if _coin_denom in (
+                    'milliampere', 'millivolt') and network == 'space-pussy' else rename_denom(_coin_denom)
+                for _coin_denom in x
+            ])
     _pools_cyber_df.loc[:, 'swap_fee'] = POOL_FEE
     _pools_cyber_df.loc[:, 'network'] = network
     if display_data:
@@ -310,7 +315,7 @@ def get_prices(pools_df: pd.DataFrame, zero_fee: bool = False, display_data: boo
         _price_row_list = []
         _coins_pair = _pool_row.reserve_coin_denoms
         _balances = \
-            {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() else int(
+            {item['denom']: np.float64(item['amount']) / np.float64(item['weight']) if 'weight' in item.keys() and item['weight'] is not None else int(
                 item['amount'])
              for item in _pool_row['balances_with_a_b' if 'balances_with_a_b' in _pool_row.keys() else 'balances']}
         if _balances:
@@ -398,6 +403,8 @@ def get_pool_liquidity(balances: list,
     balances_dict = {item['denom']: int(item['amount']) for item in balances}
     if target_denom in denoms:
         return balances_dict[target_denom] * 2
+    if not set(denoms).issubset(set(price_enriched_df.index)):
+        return 0
     if not isnan(price_enriched_df.loc[target_denom, denoms[0]]):
         return balances_dict[denoms[0]] * price_enriched_df.loc[target_denom, denoms[0]] * 2
     if not isnan(price_enriched_df.loc[target_denom, denoms[1]]):
@@ -409,6 +416,10 @@ def get_pools_and_prices(networks: Optional[list[str]],
                          pools_isin: Optional[dict[str, list]] = None,
                          pools_not_isin: Optional[dict[str, list]] = None,
                          target_denom: str = 'hydrogen',
+                         min_liquidity: Union[int, float] = 200e9,
+                         bostrom_related_osmo_pools: Optional[list[str]] = None,
+                         get_all_bostrom_related_osmo_pools: bool = True,
+                         get_human_readable_denom_from_ocr: bool = True,
                          zero_fee: bool = False) -> [pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Get pool, direct price, and enriched price data
@@ -416,11 +427,34 @@ def get_pools_and_prices(networks: Optional[list[str]],
     :param pools_isin: dictionary with pools which must be in result
     :param pools_not_isin: dictionary with pools which must not be in result
     :param target_denom: target denom for pool liquidity calculation
+    :param min_liquidity: minimum liquidity in target denom for price calculation
+    :param bostrom_related_osmo_pools: tuple of bostrom related pool ids in osmosis network or None for all pools
+    :param get_all_bostrom_related_osmo_pools: get all bostrom related osmosis pools (pools with boot or hydrogen)
+    :param get_human_readable_denom_from_ocr: get human-readable denom from On-Chain Registry contract
     :param zero_fee: calculations without|with pool fees
     :return: pool, direct price, and enriched price dataframes
     """
 
-    _pools_df = get_pools(networks=networks)
+    if get_all_bostrom_related_osmo_pools:
+        _pools_df = get_pools(networks=networks, bostrom_related_osmo_pools=None)
+        _pools_df = \
+            _pools_df[
+                (_pools_df.network.isin(['bostrom', 'space-pussy'])) |
+                (_pools_df.reserve_coin_denoms.map(
+                    lambda denoms: 'boot in osmosis' in denoms or 'hydrogen in osmosis' in denoms)) |
+                (_pools_df.network.isin(['osmosis']) & _pools_df.id.isin(BOSTROM_RELATED_OSMO_POOLS))]
+    else:
+        _pools_df = get_pools(networks=networks, bostrom_related_osmo_pools=bostrom_related_osmo_pools)
+    if get_human_readable_denom_from_ocr:
+        _pools_df.loc[:, 'reserve_coin_denoms'] = \
+            _pools_df.apply(lambda x: [get_readable_asset_denom(x['network'], item) for item in x['reserve_coin_denoms']],
+                            axis=1)
+        _pools_df.loc[:, 'balances'] = _pools_df.apply(
+            lambda x: [
+                {'denom': get_readable_asset_denom(x['network'], item['denom']),
+                 'amount': item['amount'],
+                 'weight': item['weight'] if 'weight' in item.keys() else None} for item in x['balances']],
+            axis=1)
     if pools_isin:
         _pools_df = _pools_df[
             _pools_df.apply(
@@ -433,10 +467,19 @@ def get_pools_and_prices(networks: Optional[list[str]],
                 lambda row: True if row['network'] not in pools_not_isin.keys() or row.id not in pools_not_isin[
                     row['network']] else False,
                 axis=1)]
-    _price_df = get_prices(pools_df=_pools_df, zero_fee=zero_fee)
+    _price_raw_df = get_prices(pools_df=_pools_df, zero_fee=zero_fee)
+    _price_raw_enriched_df = get_price_enriched(price_df=_price_raw_df, base_coin_denom=target_denom)
+    _pools_df['liquidity, ' + target_denom] = (
+        _pools_df['balances'].map(
+            lambda _balance: get_pool_liquidity(balances=_balance, target_denom=target_denom,
+                                                price_enriched_df=_price_raw_enriched_df)))
+    # remove small liquidity and recalculate correct prices
+    _price_df = get_prices(pools_df=_pools_df[_pools_df['liquidity, ' + target_denom] >= min_liquidity],
+                           zero_fee=zero_fee)
     _price_enriched_df = get_price_enriched(price_df=_price_df, base_coin_denom=target_denom)
     _pools_df['liquidity, ' + target_denom] = (
         _pools_df['balances'].map(
             lambda _balance: get_pool_liquidity(balances=_balance, target_denom=target_denom,
                                                 price_enriched_df=_price_enriched_df)))
+
     return _pools_df, _price_df, _price_enriched_df
