@@ -1,7 +1,7 @@
 aiohttp>=3.9.0
 pandas
 numpy
-requests
+requests>=2.31.0
 python-dotenv
 tqdm
 cyber_sdk
